@@ -6,8 +6,5 @@ using StatsPlots #For graphing
 #Include callback functions
 include("Callbacks.jl")
 include("ModelSetup.jl")
-using .ABM
-
-tstop
 
 sol = @time solve(prob,ESERK5(),saveat=0.1,callback=cb_infect,tstops=tstop)

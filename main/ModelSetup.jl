@@ -1,3 +1,7 @@
+#SOme options to choose in the setup
+infectionMethod = :wash #wash or drop
+parameterVary = false
+
 #Constants for all cell
 const N=50 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
@@ -18,13 +22,18 @@ m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
          0.0178]
 θVirus = [2.0, 1.0] # k14f tau14 (Virus Parameters)
 
-#Append the virus parameters to the orginal parameters
-append!(θVals,θVirus)
 
-#Give a unique parameter set for each cells (randomly choosen)
-percent = 0.05
-sampleDist = @. Uniform((1-percent)*θVals,(1+percent)*θVals)
-θ = reshape.(rand.(sampleDist,nCells),N,N)
+if !parameterVary
+  #Append the virus parameters to the orginal parameters
+  append!(θVals,θVirus)
+  #Give a unique parameter set for each cells (randomly choosen)
+  percent = 0.05
+  sampleDist = @. Uniform((1-percent)*θVals,(1+percent)*θVals)
+  θ = reshape.(rand.(sampleDist,nCells),N,N)
+else
+  θ = append!(θVals,θVirus)
+end
+
 
 const tspan = (0.0,48.0) #Time span for simulation
 const tstop = 1:tspan[2] #Times where the simulation stops and check for virus movement
@@ -130,8 +139,6 @@ end
 #Define a set of indices for looping through every cell
 const cellIndicies = CartesianIndices(u0[:,:,1])
 
-
-infectionMethod = :wash
 
 if infectionMethod == :wash
 
