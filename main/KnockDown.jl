@@ -8,13 +8,15 @@ function KD(parChange)
 
     IFNAve = Vector(undef,kdSamples)
     IFNStd = Vector(undef,kdSamples)
-    #solKD = []
+    solKD = []
     for (i,percent) in enumerate(KD)
         θcurrent = copy(prob.p)
         θcurrent[parChange] *= percent
+        println(θcurrent[[20,23]])
         probKD = remake(prob; p=θcurrent)
 
-        solKD = solve(probKD,ESERK5(),saveat=0.1)
+        #solKD = solve(probKD,ESERK5(),saveat=0.1)
+        solKD = solve(probKD,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)
 
         IFNAve[i] = [mean(solKD[:,:,7,t]) for t in 1:length(solKD.t)]
         IFNStd[i] = [std(solKD[findall(u0[:,:,2] .> 0),7,t]) for t in 1:length(solKD.t)]
@@ -31,11 +33,11 @@ function KD(parChange)
     ylabel!("Average $(statesNames[7]) (nM)")
     xticks!(0:12:48)
 
-    return p
-    #return (solKD,p)
+    #return p
+    return (solKD,p)
 end
 
 
 plotKD = map(KD,[20,23])
-savefig(plotKD[1],"./Figures/IRF7_KD.pdf")
-savefig(plotKD[2],"./Figures/TREX1_KD.pdf")
+savefig(plotKD[1][2],"./Figures/IRF7_KD.pdf")
+savefig(plotKD[2][2],"./Figures/TREX1_KD.pdf")

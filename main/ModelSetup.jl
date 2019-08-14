@@ -3,11 +3,11 @@ infectionMethod = :drop #wash or drop
 parameterVary = false
 
 #Constants for all cell
-const N=50 #number of grid points along one dimensions
+const N=200 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
-const D=380.0 #Diffusion coefficient (μm^2/s)
+const D=1.0 #Diffusion coefficient (μm^2/s)
 const species = 14 #Number of states within each cell (including virus)
 const moi = 1.0e-2 #Multicity of infection
 
@@ -20,7 +20,7 @@ m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
          0.0059, 0.001, 0.0112, 0.001, 99.9466, 15.1436,0.0276, 237539.3249,
          61688.259, 0.96, 1.347, 12242.8736,1.2399, 1.5101, 0.347, 0.165, 6.9295,
          0.0178]
-θVirus = [2.0, 1.0] # k14f tau14 (Virus Parameters)
+θVirus = [2.0, 1.0] # k14f τ14 (Virus Parameters)
 
 
 if parameterVary
@@ -96,7 +96,7 @@ function Model!(du,u,p,t)
   d_Virus = @view du[:,:,14]
 
   #Parameters
-  k1f, k1r, k3f, k3r, k4f, kcat5, Km5, k5r, kcat6, Km6, kcat7, Km7, kcat8, Km8, k8f, k9f, k10f1, k10f2, k11f, k12f, k13f, k6f, kcat2, Km2, tau4, tau6, tau7, tau8, tau9, tau10, tau11, tau12, tau13, k14f, tau14  = p
+  k1f, k1r, k3f, k3r, k4f, kcat5, Km5, k5r, kcat6, Km6, kcat7, Km7, kcat8, Km8, k8f, k9f, k10f1, k10f2, k11f, k12f, k13f, k6f, kcat2, Km2, τ4, τ6, τ7, τ8, τ9, τ10, τ11, τ12, τ13, k14f, τ14  = p
 
   #Calculate diffusion of interferon (Ly*IFN + IFN*Lx)
   mul!(Ly●IFNβ, Ly, IFNβ)
@@ -109,17 +109,17 @@ function Model!(du,u,p,t)
   @. d_cGAS = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS)
   @. d_DNA = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS) - kcat2*TREX1*DNA / (Km2 + DNA)
   @. d_Sting = -k3f*cGAMP*Sting + k3r*(Stingtot - Sting)
-  @. d_cGAMP = k4f*(cGAStot - cGAS) - k3f*cGAMP*Sting + k3f*(Stingtot - Sting) - tau4*cGAMP
+  @. d_cGAMP = k4f*(cGAStot - cGAS) - k3f*cGAMP*Sting + k3f*(Stingtot - Sting) - τ4*cGAMP
   @. d_IRF3 = -kcat5*IRF3*(Stingtot - Sting) / (Km5 +IRF3) + k5r*(IRF3tot - IRF3)
-  @. d_IFNβm = kcat6*(IRF3tot - IRF3) / (Km6 + (IRF3tot - IRF3)) + k6f*IRF7 - tau6*IFNβm
-  @. d_IFNβ = kcat7*IFNβm / (Km7 + IFNβm) - tau7*IFNβ + L●IFNβ #Add the diffusion in here
-  @. d_STAT = kcat8*IFNβ / (Km8 + IFNβ) * 1.0/(1.0+k8f*SOCSm) - tau8*STAT
-  @. d_SOCSm = k9f*STAT - tau9*SOCSm
-  @. d_IRF7m = k10f1*STAT + k10f2*IRF7 - tau10*IRF7m
-  @. d_TREX1m = k11f*STAT - tau11*TREX1m
-  @. d_IRF7 = k12f*IRF7m - tau12*IRF7
-  @. d_TREX1 = k13f*TREX1m - tau13*TREX1
-  @. d_Virus = k14f*DNA - tau14*Virus
+  @. d_IFNβm = kcat6*(IRF3tot - IRF3) / (Km6 + (IRF3tot - IRF3)) + k6f*IRF7 - τ6*IFNβm
+  @. d_IFNβ = kcat7*IFNβm / (Km7 + IFNβm) - τ7*IFNβ + L●IFNβ #Add the diffusion in here
+  @. d_STAT = kcat8*IFNβ / (Km8 + IFNβ) * 1.0/(1.0+k8f*SOCSm) - τ8*STAT
+  @. d_SOCSm = k9f*STAT - τ9*SOCSm
+  @. d_IRF7m = k10f1*STAT + k10f2*IRF7 - τ10*IRF7m
+  @. d_TREX1m = k11f*STAT - τ11*TREX1m
+  @. d_IRF7 = k12f*IRF7m - τ12*IRF7
+  @. d_TREX1 = k13f*TREX1m - τ13*TREX1
+  @. d_Virus = k14f*DNA - τ14*Virus
 end
 
 #Loop though all of the species and determine initial conditions

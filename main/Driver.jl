@@ -1,5 +1,5 @@
 #Import Packages needed for simulation
-using DifferentialEquations, DiffEqOperators #For implementing Differential equations
+using DifferentialEquations, DiffEqOperators, Sundials #For implementing Differential equations
 using LinearAlgebra, SparseArrays, Distributions, Statistics #Linear Algebra and Statistics
 using StatsPlots #For graphing
 
@@ -7,4 +7,4 @@ using StatsPlots #For graphing
 include("Callbacks.jl")
 include("ModelSetup.jl")
 
-#sol = @time solve(prob,ESERK5(),saveat=0.1,callback=cb_infect,tstops=tstop)
+#sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)
