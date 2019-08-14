@@ -11,7 +11,7 @@ gif(anim,"CellGridAnimation.gif")
 
 
 
-stateToPlot = 7
+stateToPlot = 14
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]
 plot(sol.t,plotState[:],leg=false)
 title!(statesNames[stateToPlot])

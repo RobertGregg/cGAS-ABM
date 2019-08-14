@@ -1,9 +1,9 @@
 #SOme options to choose in the setup
 infectionMethod = :drop #wash or drop
-parameterVary = false
+parameterVary = false #All cells have different parameters?
 
 #Constants for all cell
-const N=200 #number of grid points along one dimensions
+const N=50 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number

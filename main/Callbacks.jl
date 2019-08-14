@@ -6,11 +6,18 @@ end
 
 function InfectAffect(integrator)
 
+    #The sundials algorithm flattens out the solution
+    if isa(integrator.alg,CVODE_BDF)
+        u =  reshape(integrator.u,N,N,species)
+    else
+        u = integrator.u
+    end
+
     #Get the index for the current time
     tIdx = searchsortedfirst(tstop,integrator.t)
 
     #calculate prob of getting infected
-    Probs = InfectProbability(integrator,tIdx)
+    Probs = InfectProbability(u,tIdx)
 
     #Cells from the previous time point are still infected
     cellsInfected[:,:,tIdx+1] .= cellsInfected[:,:,tIdx] #faster in loop?
@@ -20,20 +27,28 @@ function InfectAffect(integrator)
         #Probs[coord]
         if rand() < Probs[coord] #infect the cell
             #Add Viral DNA to the cell
-            integrator.u[coord,2] = m2c(1e3)
+            u[coord,2] = m2c(1e3)
             #Mark that the cell was infected
             cellsInfected[coord,tIdx+1] = 1
         end
     end
+
+    #update the species concentrations (ode solver dependent)
+    if isa(integrator.alg,CVODE_BDF)
+        integrator.u = u[:]
+    else
+        integrator.u = u
+    end
+
+
 end
 
-function InfectProbability(integrator,tIdx)
+function InfectProbability(u,tIdx)
 
     #Takes in a viral concentration and outputs a probability for infection
     d(vConc) = ccdf(Normal(0.8,0.1),vConc)
 
-    #Array of viral concentrations
-    virusConc = integrator.u[:,:,14] #current viral concentrations in each cell
+    virusConc = u[:,:,end] #current viral concentrations in each cell
 
     #Initialize an array of probabilities
     probInfected = zeros(N,N)

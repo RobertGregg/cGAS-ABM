@@ -3,9 +3,9 @@ using ProgressMeter
 include("Driver.jl")
 
 solutionArray = []
-parRange = 20
+parRange = 10
 
-kcat8Vals = range(1.0,3.0,length=parRange)
+kcat8Vals = range(1.0,100.0,length=parRange)
 τ7Vals = exp10.(range(3.0,6.0,length=parRange))
 
 @showprogress 1 "Computing..." for kcat8 in kcat8Vals, τ7 in τ7Vals
@@ -21,4 +21,4 @@ finalIFNβ = [mean(sol[:,:,7,end]) for sol in solutionArray]
 
 p = heatmap(log10.(τ7Vals),kcat8Vals,finalIFNβ,color=:viridis,framestyle=:box)
 
-savefig(p,"./Figures/IFNb_Chronic.pdf")
+#savefig(p,"./Figures/IFNb_Chronic.pdf")
