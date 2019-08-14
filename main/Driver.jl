@@ -7,4 +7,4 @@ using StatsPlots #For graphing
 include("Callbacks.jl")
 include("ModelSetup.jl")
 
-sol = @time solve(prob,ESERK5(),saveat=0.1,callback=cb_infect,tstops=tstop)
+#sol = @time solve(prob,ESERK5(),saveat=0.1,callback=cb_infect,tstops=tstop)
