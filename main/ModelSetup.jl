@@ -1,6 +1,6 @@
 #SOme options to choose in the setup
 infectionMethod = :drop #wash or drop
-parameterVary = false #All cells have different parameters?
+parameterVary = true #All cells have different parameters?
 
 #Constants for all cell
 const N=50 #number of grid points along one dimensions
@@ -119,7 +119,8 @@ function Model!(du,u,p,t)
   @. d_TREX1m = k11f*STAT - τ11*TREX1m
   @. d_IRF7 = k12f*IRF7m - τ12*IRF7
   @. d_TREX1 = k13f*TREX1m - τ13*TREX1
-  @. d_Virus = k14f*DNA - τ14*Virus
+  #@. d_Virus = k14f*DNA - τ14*Virus
+  @. d_Virus = DNA*(1.0-DNA/k14f)
 end
 
 #Loop though all of the species and determine initial conditions

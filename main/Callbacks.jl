@@ -1,4 +1,6 @@
+#############################
 #Callback 1: healthy → Infect
+#############################
 
 function InfectCondition(u,t,integrator)
     t ∈ tstop
@@ -78,3 +80,42 @@ function InfectProbability(u,tIdx)
 end
 
 cb_infect = DiscreteCallback(InfectCondition,InfectAffect)
+
+#############################
+#Callback 2: Re-challenge
+#############################
+
+function ChellangeCondition(u,t,integrator)
+    t ∈ 24.0
+end
+
+
+function ChellangeAffect(integrator)
+
+    #The sundials algorithm flattens out the solution
+    if isa(integrator.alg,CVODE_BDF)
+        u =  reshape(integrator.u,N,N,species)
+    else
+        u = integrator.u
+    end
+
+    for (i,currentCell) in enumerate(cellIndicies)
+        #Are the cells inside the infected region?
+        if sqDist([currentCell[1],currentCell[2]],circleOrigin) <= circleRadiusSquared
+            u[currentCell,2] = m2c(1e3)
+        end
+    end
+
+    if isa(integrator.alg,CVODE_BDF)
+        integrator.u = u[:]
+    else
+        integrator.u = u
+    end
+end
+
+cb_challenge = DiscreteCallback(ChellangeCondition,ChellangeAffect)
+
+
+
+#Collect all of the callbacks
+cb_all = CallbackSet(cb_infect,cb_challenge)
