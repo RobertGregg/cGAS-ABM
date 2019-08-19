@@ -24,8 +24,8 @@ end
 #############################
 
 function InfectCondition(u,t,integrator)
-    t ∈ tstop
-    #true
+    u = SunDials_Reshape(integrator)
+    any( u[:,:,14] .> virusThresold)
 end
 
 function InfectAffect(integrator)
@@ -33,14 +33,11 @@ function InfectAffect(integrator)
     #Check if the sundials solver is used, extract current states
     u = SunDials_Reshape(integrator)
 
-    #Get the index for the current time
-    tIdx = searchsortedfirst(tstop,integrator.t)
+    #Get the index for cells above virusThresold
+    vIdx = findall(u[:,:,14] .> virusThresold)
 
     #calculate prob of getting infected
-    Probs = InfectProbability(u,tIdx)
-
-    #Cells from the previous time point are still infected
-    cellsInfected[:,:,tIdx+1] .= cellsInfected[:,:,tIdx] #faster in loop?
+    Probs = InfectProbability(u,vIdx)
 
     #Detemine if prob is high enough to infect cell
     for coord in CartesianIndices(Probs)
@@ -49,7 +46,7 @@ function InfectAffect(integrator)
             #Add Viral DNA to the cell
             u[coord,2] = m2c(1e3)
             #Mark that the cell was infected
-            cellsInfected[coord,tIdx+1] = 1
+            cellsInfected[coord] = integrator.t
         end
     end
 
@@ -59,7 +56,7 @@ function InfectAffect(integrator)
 
 end
 
-function InfectProbability(u,tIdx)
+function InfectProbability(u,vIdx)
 
     #Takes in a viral concentration and outputs a probability for infection
     d(vConc) = ccdf(Normal(m2c(1e3),0.1),vConc)
@@ -78,10 +75,10 @@ function InfectProbability(u,tIdx)
     for I in Index
             probNotInfected = 1.0
 
-            if cellsInfected[I,tIdx]==0 #If it is a healthy cell...
+            if cellsInfected[I]==Inf #If it is a healthy cell...
             #Loop through all of the neighbors (and current grid point)
                 for J in max(Ifirst, I-Ifirst):min(Ilast, I+Ifirst)
-                    if cellsInfected[J,tIdx]==1 & (I != J) #count only infected neighbors, skip self
+                    if !isinf(cellsInfected[J]) & (I != J) #count only infected neighbors, skip self
                         probNotInfected *= d(virusConc[J])
                     end
                 end

@@ -9,9 +9,19 @@ end
 
 gif(anim,"CellGridAnimation.gif")
 
+#Plot a cross section of the heatmap
+
+anim = @animate for i = tspan[1]:0.1:tspan[2]
+    G = sol(i)[:,:,7]
+    plot(diag(G),ylims=(0.0,20.0),title="Time = " * string(i) * " hrs")
+end
+
+gif(anim,"CrossSection.gif")
 
 
-stateToPlot = 2
+
+#Plot all of one state
+stateToPlot = 14
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]
 plot(sol.t,plotState[:],leg=false)
 title!(statesNames[stateToPlot])
@@ -22,7 +32,6 @@ ylabel!("(nM)")
 
 
 #Plotting just the infected cells
-
 p = Vector(undef,species)
 for (i,name) in enumerate(statesNames)
 

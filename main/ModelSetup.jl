@@ -3,7 +3,7 @@ infectionMethod = :drop #wash or drop
 parameterVary = true #All cells have different parameters?
 
 #Constants for all cell
-const N=100 #number of grid points along one dimensions
+const N=50 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
@@ -34,6 +34,7 @@ else
   θ = append!(θVals,θVirus)
 end
 
+const virusThresold = m2c(1e3)
 
 const tspan = (0.0,48.0) #Time span for simulation
 const tstop = 1:tspan[2] #Times where the simulation stops and check for virus movement
@@ -162,9 +163,9 @@ elseif infectionMethod == :drop
 
 end
 
-#Keep track of infected cells (zero is healthy and one is infected)
-const cellsInfected = zeros(Int8,N,N,length(tstop)+1) #Make constant when not testing
-cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 1
+#Keep track of infected cells (save time when infected, Inf means not infected)
+const cellsInfected = fill(Inf,N,N) #Make constant when not testing
+cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
 
 
 #Contruct the ODEs
