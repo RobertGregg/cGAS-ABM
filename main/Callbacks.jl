@@ -1,19 +1,37 @@
+#The sundials algorithms convert the solution into a one dimensional vector.
+#To avoid annoying indexing convert back to 3D shape (xdir,ydir,species)
+function SunDials_Reshape(integrator)
+    if isa(integrator.alg,CVODE_BDF)
+        u =  reshape(integrator.u,N,N,species)
+    else
+        u = integrator.u
+    end
+    return u
+end
+#This function just reverses the process to put back into the solver
+function SunDials_Flatten(integrator,u)
+    #update the species concentrations (ode solver dependent)
+    if isa(integrator.alg,CVODE_BDF)
+        u = u[:]
+    end
+    return u
+end
+
+
+
 #############################
 #Callback 1: healthy → Infect
 #############################
 
 function InfectCondition(u,t,integrator)
     t ∈ tstop
+    #true
 end
 
 function InfectAffect(integrator)
 
-    #The sundials algorithm flattens out the solution
-    if isa(integrator.alg,CVODE_BDF)
-        u =  reshape(integrator.u,N,N,species)
-    else
-        u = integrator.u
-    end
+    #Check if the sundials solver is used, extract current states
+    u = SunDials_Reshape(integrator)
 
     #Get the index for the current time
     tIdx = searchsortedfirst(tstop,integrator.t)
@@ -35,12 +53,8 @@ function InfectAffect(integrator)
         end
     end
 
-    #update the species concentrations (ode solver dependent)
-    if isa(integrator.alg,CVODE_BDF)
-        integrator.u = u[:]
-    else
-        integrator.u = u
-    end
+    #Update the current solver solution
+    integrator.u = SunDials_Flatten(integrator,u)
 
 
 end
@@ -48,7 +62,7 @@ end
 function InfectProbability(u,tIdx)
 
     #Takes in a viral concentration and outputs a probability for infection
-    d(vConc) = ccdf(Normal(0.8,0.1),vConc)
+    d(vConc) = ccdf(Normal(m2c(1e3),0.1),vConc)
 
     virusConc = u[:,:,end] #current viral concentrations in each cell
 
@@ -93,11 +107,7 @@ end
 function ChellangeAffect(integrator)
 
     #The sundials algorithm flattens out the solution
-    if isa(integrator.alg,CVODE_BDF)
-        u =  reshape(integrator.u,N,N,species)
-    else
-        u = integrator.u
-    end
+    u = SunDials_Reshape(integrator,:u)
 
     for (i,currentCell) in enumerate(cellIndicies)
         #Are the cells inside the infected region?
@@ -106,11 +116,7 @@ function ChellangeAffect(integrator)
         end
     end
 
-    if isa(integrator.alg,CVODE_BDF)
-        integrator.u = u[:]
-    else
-        integrator.u = u
-    end
+    integrator.u = SunDials_Flatten(integrator,u)
 end
 
 cb_challenge = DiscreteCallback(ChellangeCondition,ChellangeAffect)
@@ -119,3 +125,8 @@ cb_challenge = DiscreteCallback(ChellangeCondition,ChellangeAffect)
 
 #Collect all of the callbacks
 cb_all = CallbackSet(cb_infect,cb_challenge)
+
+
+#############################
+#Callback 1: Infect → dead
+#############################

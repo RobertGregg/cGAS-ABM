@@ -12,6 +12,11 @@ virusPeaks = Vector(undef,length(percents))
     sampleDist = @. Uniform((1-percent)*θVals,(1+percent)*θVals)
     θcurrent = reshape.(rand.(sampleDist,nCells),N,N)
 
+    #Keep the virus parameters the same
+    for par in [34,35]
+    θcurrent[par] = fill(θVals[par],N,N)
+    end
+
     #Contruct the ODEs
     probNew = remake(prob; p=θcurrent)
     #Solve the problem
@@ -22,7 +27,8 @@ virusPeaks = Vector(undef,length(percents))
 
 end
 
-p=boxplot(vec.(virusPeaks),legend=false,outliers=false,frame=:box,color=:orange)
+#p=boxplot(vec.(virusPeaks),legend=false,outliers=false,frame=:box,color=:orange)
+p=violin(vec.(virusPeaks),legend=false,frame=:box,color=:orange)
 xticks!(1:parcentRange,string.(percents))
 xlabel!("Parameter Variability")
 ylabel!("Maximum Viral Production")

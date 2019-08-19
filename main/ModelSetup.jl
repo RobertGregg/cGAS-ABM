@@ -1,9 +1,9 @@
-#SOme options to choose in the setup
+#Some options to choose in the setup
 infectionMethod = :drop #wash or drop
 parameterVary = true #All cells have different parameters?
 
 #Constants for all cell
-const N=50 #number of grid points along one dimensions
+const N=100 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
@@ -16,7 +16,7 @@ m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
 
 #Paramter values for the ODEs
 θVals = [2.6899, 4.8505, 0.0356, 7.487, 517.4056, 22328.3852, 11226.3682,0.9341,
-         206.9446, 10305.461, 47639702.95,3.8474, 13.006, 78.2048, 0.0209,
+         206.9446, 10305.461, 47639702.95,3.8474, 50.006, 78.2048, 0.0209,
          0.0059, 0.001, 0.0112, 0.001, 99.9466, 15.1436,0.0276, 237539.3249,
          61688.259, 0.96, 1.347, 12242.8736,1.2399, 1.5101, 0.347, 0.165, 6.9295,
          0.0178]
@@ -119,8 +119,8 @@ function Model!(du,u,p,t)
   @. d_TREX1m = k11f*STAT - τ11*TREX1m
   @. d_IRF7 = k12f*IRF7m - τ12*IRF7
   @. d_TREX1 = k13f*TREX1m - τ13*TREX1
-  #@. d_Virus = k14f*DNA - τ14*Virus
-  @. d_Virus = DNA*(1.0-DNA/k14f)
+  @. d_Virus = k14f*DNA - τ14*Virus
+  #@. d_Virus = DNA*(1.0-DNA/k14f)
 end
 
 #Loop though all of the species and determine initial conditions
