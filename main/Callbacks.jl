@@ -23,24 +23,33 @@ end
 #Callback 1: healthy → Infect
 #############################
 
-function InfectCondition(u,t,integrator)
+
+function InfectCondition(out,u,t,integrator)
+    #println(size(out))
     u = SunDials_Reshape(integrator)
-    any( u[:,:,14] .> virusThresold)
+
+    infectiousState = virusThresold .- u[:,:,14]
+    for (idx,virusConc) in enumerate(infectiousState)
+        out[idx] = virusConc
+    end
+    println(out)
+    return out
 end
 
-function InfectAffect(integrator)
+function InfectAffect!(integrator,idx)
 
     #Check if the sundials solver is used, extract current states
     u = SunDials_Reshape(integrator)
-
+    println(idx)
     #Get the index for cells above virusThresold
-    vIdx = findall(u[:,:,14] .> virusThresold)
+    #vIdx = findall(u[:,:,14] .> virusThresold)
+    vIdx = cellIndicies[idx]
 
     #calculate prob of getting infected
     Probs = InfectProbability(u,vIdx)
 
     #Detemine if prob is high enough to infect cell
-    for coord in CartesianIndices(Probs)
+    for coord in cellIndicies
         #Probs[coord]
         if rand() < Probs[coord] #infect the cell
             #Add Viral DNA to the cell
@@ -52,8 +61,6 @@ function InfectAffect(integrator)
 
     #Update the current solver solution
     integrator.u = SunDials_Flatten(integrator,u)
-
-
 end
 
 function InfectProbability(u,vIdx)
@@ -78,7 +85,7 @@ function InfectProbability(u,vIdx)
             if cellsInfected[I]==Inf #If it is a healthy cell...
             #Loop through all of the neighbors (and current grid point)
                 for J in max(Ifirst, I-Ifirst):min(Ilast, I+Ifirst)
-                    if !isinf(cellsInfected[J]) & (I != J) #count only infected neighbors, skip self
+                    if (J in vIdx) & (I != J) #count only infectous neighbors, skip self
                         probNotInfected *= d(virusConc[J])
                     end
                 end
@@ -90,7 +97,7 @@ function InfectProbability(u,vIdx)
     return probInfected
 end
 
-cb_infect = DiscreteCallback(InfectCondition,InfectAffect)
+cb_infect =VectorContinuousCallback(InfectCondition,InfectAffect!,N^2,rootfind=false)
 
 #############################
 #Callback 2: Re-challenge
@@ -101,10 +108,10 @@ function ChellangeCondition(u,t,integrator)
 end
 
 
-function ChellangeAffect(integrator)
+function ChellangeAffect!(integrator)
 
     #The sundials algorithm flattens out the solution
-    u = SunDials_Reshape(integrator,:u)
+    u = SunDials_Reshape(integrator)
 
     for (i,currentCell) in enumerate(cellIndicies)
         #Are the cells inside the infected region?
@@ -116,14 +123,31 @@ function ChellangeAffect(integrator)
     integrator.u = SunDials_Flatten(integrator,u)
 end
 
-cb_challenge = DiscreteCallback(ChellangeCondition,ChellangeAffect)
+cb_challenge = DiscreteCallback(ChellangeCondition,ChellangeAffect!)
+
+
+#############################
+#Callback 3: Infect → dead
+#############################
+
+const InfectTimeframe = rand(TruncatedNormal(3.0,0.5,0.0,Inf),N,N)
+
+function DeadCondition(out,u,t,integrator)
+    #When does the cell go beyond the alloted tim to be infected?
+    out = @. InfectTimeframe - (integrator.t - cellsInfected)
+    out = out[:]
+end
+
+function DeadAffect!(integrator,idx)
+    u = SunDials_Reshape(integrator)
+    u[cellIndicies[idx],:] .= 0.0
+    integrator.u = SunDials_Flatten(integrator,u)
+end
+
+cb_dead = VectorContinuousCallback(DeadCondition,DeadAffect!,N^2)
+
 
 
 
 #Collect all of the callbacks
-cb_all = CallbackSet(cb_infect,cb_challenge)
-
-
-#############################
-#Callback 1: Infect → dead
-#############################
+cb_13 = CallbackSet(cb_infect,cb_dead)

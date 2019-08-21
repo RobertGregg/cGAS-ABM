@@ -37,7 +37,7 @@ for (i,name) in enumerate(statesNames)
 
     plotState = []
     for coord in cellIndicies
-        if cellsInfected[coord,1] == 1
+        if !isinf(cellsInfected[coord,1])
             push!(plotState,sol[coord,i,:])
         end
     end

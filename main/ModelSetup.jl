@@ -1,15 +1,15 @@
 #Some options to choose in the setup
-infectionMethod = :drop #wash or drop
+infectionMethod = :wash #wash or drop
 parameterVary = true #All cells have different parameters?
 
 #Constants for all cell
-const N=50 #number of grid points along one dimensions
+const N=5 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const D=1.0 #Diffusion coefficient (μm^2/s)
 const species = 14 #Number of states within each cell (including virus)
-const moi = 1.0e-2 #Multicity of infection
+const moi = 1.0 #Multicity of infection
 
 #Converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
@@ -103,7 +103,7 @@ function Model!(du,u,p,t)
   mul!(Ly●IFNβ, Ly, IFNβ)
   mul!(IFNβ●Lx,IFNβ,Lx)
 
-  #Sum the x and y components
+  #Sum the x and y componentsd
    L●IFNβ = @. D*(Ly●IFNβ + IFNβ●Lx)
 
   #Update derivatives for each species according to model

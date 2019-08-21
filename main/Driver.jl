@@ -4,10 +4,11 @@ using LinearAlgebra, SparseArrays, Distributions, Statistics #Linear Algebra and
 using StatsPlots #For graphing
 
 #Include callback functions
-include("Callbacks.jl")
 include("ModelSetup.jl")
+include("Callbacks.jl")
+
 
 #sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1,callback=cb_all,tstops=tstop)
-sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb_infect,tstops=tstop)
+#sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb_infect)
 
-#sol = @time solve(prob,ESERK5(),saveat=0.1,callback=cb_infect)
+sol = @time solve(prob,ESERK5(),saveat=0.1,callback=cb_infect)
