@@ -1,13 +1,13 @@
 #Some options to choose in the setup
 infectionMethod = :drop #wash or drop
-parameterVary = true #All cells have different parameters?
+parameterVary = false #All cells have different parameters?
 
 #Constants for all cell
 const N=100 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
-const D=1.0 #Diffusion coefficient (μm^2/s)
+const D=380.0 #Diffusion coefficient (μm^2/s)
 const species = 14 #Number of states within each cell (including virus)
 const moi = 1.0e-2 #Multicity of infection
 
@@ -16,7 +16,7 @@ m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
 
 #Paramter values for the ODEs
 θVals = [2.6899, 4.8505, 0.0356, 7.487, 517.4056, 22328.3852, 11226.3682,0.9341,
-         206.9446, 10305.461, 47639702.95,3.8474, 50.006, 78.2048, 0.0209,
+         206.9446, 10305.461, 47639702.95,3.8474, 13.006, 78.2048, 0.0209,
          0.0059, 0.001, 0.0112, 0.001, 99.9466, 15.1436,0.0276, 237539.3249,
          61688.259, 0.96, 1.347, 12242.8736,1.2399, 1.5101, 0.347, 0.165, 6.9295,
          0.0178]
@@ -35,7 +35,7 @@ else
 end
 
 
-const tspan = (0.0,48.0) #Time span for simulation
+const tspan = (0.0,168.0) #Time span for simulation
 const tstop = 1:tspan[2] #Times where the simulation stops and check for virus movement
 const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
                      "SOCSm","IRF7m","TREX1m","IRF7","TREX1","Virus"] #for plotting
@@ -163,8 +163,9 @@ elseif infectionMethod == :drop
 end
 
 #Keep track of infected cells (zero is healthy and one is infected)
-const cellsInfected = zeros(Int8,N,N,length(tstop)+1) #Make constant when not testing
-cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 1
+#const cellsInfected = zeros(Int8,N,N,length(tstop)+1) #Make constant when not testing
+#cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 1
+
 
 
 #Contruct the ODEs
