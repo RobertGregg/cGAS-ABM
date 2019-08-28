@@ -11,7 +11,7 @@ virusPeaks = Vector(undef,length(percents))
 @showprogress 1 "Computing..." for (i,percent) in enumerate(percents)
     global cellsInfected
 
-    sampleDist = @. Uniform((1-percent)*θVals,(1+percent)*θVals)
+    sampleDist = @. Uniform((1-percent)*θVals,θVals)
     θcurrent = reshape.(rand.(sampleDist,nCells),N,N)
 
     #Reset the infection matrix

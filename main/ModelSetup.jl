@@ -1,13 +1,13 @@
 #Some options to choose in the setup
 infectionMethod = :drop #wash or drop
-parameterVary = false #All cells have different parameters?
+parameterVary = true #All cells have different parameters?
 
 #Constants for all cell
 const N=100 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
-const D=380.0 #Diffusion coefficient (μm^2/s)
+const D=1.0 #Diffusion coefficient (μm^2/hr)
 const species = 14 #Number of states within each cell (including virus)
 const moi = 1.0e-2 #Multicity of infection
 
@@ -20,7 +20,14 @@ m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
          0.0059, 0.001, 0.0112, 0.001, 99.9466, 15.1436,0.0276, 237539.3249,
          61688.259, 0.96, 1.347, 12242.8736,1.2399, 1.5101, 0.347, 0.165, 6.9295,
          0.0178]
-θVirus = [2.0, 1.0] # k14f τ14 (Virus Parameters)
+θVirus = [1.0, 1.0] # k14f τ14 (Virus Parameters)
+
+const tspan = (0.0,168.0) #Time span for simulation
+#const tstop = 1:tspan[2] #Times where the simulation stops and check for virus movement
+const tstop = sort(rand(Uniform(tspan[1],tspan[2]),1000)) #Times where the simulation stops and check for virus movement
+const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
+                     "SOCSm","IRF7m","TREX1m","IRF7","TREX1","Virus"] #for plotting
+
 
 
 if parameterVary
@@ -33,12 +40,6 @@ if parameterVary
 else
   θ = append!(θVals,θVirus)
 end
-
-
-const tspan = (0.0,168.0) #Time span for simulation
-const tstop = 1:tspan[2] #Times where the simulation stops and check for virus movement
-const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
-                     "SOCSm","IRF7m","TREX1m","IRF7","TREX1","Virus"] #for plotting
 
 
  function Laplacian1D(n)
@@ -153,7 +154,7 @@ elseif infectionMethod == :drop
   #Calculate squared distances
   sqDist(x,c) = reduce(+, @. (x-c)^2)
   #Loop though cells and check if they are infected
-  for (i,currentCell) in enumerate(cellIndicies)
+  for currentCell in cellIndicies
       #Are the cells inside the infected region?
       if sqDist([currentCell[1],currentCell[2]],circleOrigin) <= circleRadiusSquared
           u0[currentCell,2] = m2c(1e3)
@@ -165,7 +166,9 @@ end
 #Keep track of infected cells (zero is healthy and one is infected)
 #const cellsInfected = zeros(Int8,N,N,length(tstop)+1) #Make constant when not testing
 #cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 1
-
+#Keep track of infected cells (save time when infected, Inf means not infected)
+global cellsInfected = fill(Inf,N,N) #Make constant when not testing
+cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
 
 
 #Contruct the ODEs

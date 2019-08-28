@@ -23,13 +23,20 @@ end
 #Callback 1: healthy → Infect
 #############################
 
-#Keep track of infected cells (save time when infected, Inf means not infected)
-global cellsInfected = fill(Inf,N,N) #Make constant when not testing
-cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
-
+#Trading readbility for speed here
 function InfectCondition(u,t,integrator)
+    #println(integrator.t)
+
     t ∈ tstop
-    #true
+
+    # SunDials_Reshape(integrator)
+    #cutoff = m2c(1000.)
+    #@inbounds for i = 1:size(u)[1], j=1:size(u)[2]
+    #    if u[i,j,end] > cutoff
+    #        return true
+    #    end
+    #end
+    #return false
 end
 
 function InfectAffect(integrator)
@@ -38,16 +45,16 @@ function InfectAffect(integrator)
     u = SunDials_Reshape(integrator)
 
     #Get the index for the current time
-    tIdx = searchsortedfirst(tstop,integrator.t)
+    #tIdx = searchsortedfirst(tstop,integrator.t)
 
     #calculate prob of getting infected
-    Probs = InfectProbability(u,tIdx)
+    Probs = InfectProbability(u)
 
     #Cells from the previous time point are still infected
     #cellsInfected[:,:,tIdx+1] .= cellsInfected[:,:,tIdx] #faster in loop?
 
     #Detemine if prob is high enough to infect cell
-    for coord in CartesianIndices(Probs)
+    @inbounds for coord in cellIndicies
         #Probs[coord]
         if rand() < Probs[coord] #infect the cell
             #Add Viral DNA to the cell
@@ -63,7 +70,7 @@ function InfectAffect(integrator)
 
 end
 
-function InfectProbability(u,tIdx)
+function InfectProbability(u)
 
     #Takes in a viral concentration and outputs a probability for infection
     d(vConc) = ccdf(Normal(m2c(1e3),0.1),vConc)
@@ -77,7 +84,7 @@ function InfectProbability(u,tIdx)
     Ifirst, Ilast = first(Index), last(Index)
 
     #Loop through all of the grid points
-    for I in Index
+    @inbounds for I in Index
             probNotInfected = 1.0
 
             if cellsInfected[I]==Inf #If it is a healthy cell...
