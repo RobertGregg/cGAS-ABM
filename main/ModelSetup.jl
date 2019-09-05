@@ -1,13 +1,13 @@
 #Some options to choose in the setup
-infectionMethod = :drop #wash or drop
-parameterVary = true #All cells have different parameters?
+infectionMethod = :wash #wash or drop
+parameterVary = :MCMC #All cells have different parameters?
 
 #Constants for all cell
 const N=100 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
-const D=1.0 #Diffusion coefficient (μm^2/hr)
+const D=95.0*3600 #Diffusion coefficient (μm^2/hr)
 const species = 14 #Number of states within each cell (including virus)
 const moi = 1.0e-2 #Multicity of infection
 
@@ -15,12 +15,17 @@ const moi = 1.0e-2 #Multicity of infection
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
 
 #Paramter values for the ODEs
+θNames = [:k1f, :k1r, :k3f, :k3r, :k4f, :kcat5, :Km5, :k5r, :kcat6, :Km6, :kcat7,
+:Km7, :kcat8, :Km8, :k8f, :k9f, :k10f1, :k10f2, :k11f, :k12f, :k13f, :k6f, :kcat2,
+:Km2, :τ4, :τ6, :τ7, :τ8, :τ9, :τ10, :τ11, :τ12, :τ13, :k14f,:τ14]
 θVals = [2.6899, 4.8505, 0.0356, 7.487, 517.4056, 22328.3852, 11226.3682,0.9341,
          206.9446, 10305.461, 47639702.95,3.8474, 13.006, 78.2048, 0.0209,
          0.0059, 0.001, 0.0112, 0.001, 99.9466, 15.1436,0.0276, 237539.3249,
          61688.259, 0.96, 1.347, 12242.8736,1.2399, 1.5101, 0.347, 0.165, 6.9295,
          0.0178]
 θVirus = [1.0, 1.0] # k14f τ14 (Virus Parameters)
+append!(θVals,θVirus) #Append the virus parameters to the orginal parameters
+
 
 const tspan = (0.0,168.0) #Time span for simulation
 #const tstop = 1:tspan[2] #Times where the simulation stops and check for virus movement
@@ -30,15 +35,26 @@ const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
 
 
 
-if parameterVary
-  #Append the virus parameters to the orginal parameters
-  append!(θVals,θVirus)
+if parameterVary == :Random
   #Give a unique parameter set for each cells (randomly choosen)
   percent = 0.05
   sampleDist = @. Uniform((1-percent)*θVals,(1+percent)*θVals)
   θ = reshape.(rand.(sampleDist,nCells),N,N)
-else
-  θ = append!(θVals,θVirus)
+
+elseif parameterVary == :MCMC
+  #predefine the parameter arrays
+  θ = Vector(undef,length(θVals))
+  #Load in the MCMC chain
+  mcmcChain = CSV.read("Run1.csv",skipto=9_000_000)
+  #loop through parameters to see if they're in MCMC chain
+  for (i,name) in enumerate(θNames)
+    if name ∈ names(mcmcChain)
+      θ[i] = reshape(rand(mcmcChain[!,name],nCells),N,N)
+    else
+      θ[i] = fill(θVals[i],N,N)
+    end
+  end
+
 end
 
 
@@ -48,7 +64,7 @@ end
      #Approximation order
          ApproxOrder = 2
      #Grid spacing (diameter of cell in μm)
-         h = 1.0
+         h = 30.0
      #Second order approximation of the second derivative
          L = DerivativeOperator{Float64}(DerOrder,ApproxOrder,h,n,:Neumann0,:Neumann0)
      return sparse(L)
