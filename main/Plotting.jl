@@ -26,7 +26,7 @@ gif(anim,"CellGridAnimation.gif")
 
 stateToPlot = 7
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]
-plot(sol.t,plotState[:],leg=false)
+plot!(sol.t,plotState[:],leg=false)
 title!(statesNames[stateToPlot])
 xlabel!("Time (hrs)")
 ylabel!("(nM)")

@@ -3,8 +3,8 @@ using ProgressMeter, DataFrames
 
 
 #Give a unique parameter set for each cells (randomly choosen), ignore virus parameters?
-percentRange =10
-percents = range(0.01,1.0,length=percentRange)
+percentRange =8
+percents = range(0.01,0.5,length=percentRange)
 
 virusPeaks = Vector(undef,length(percents))
 

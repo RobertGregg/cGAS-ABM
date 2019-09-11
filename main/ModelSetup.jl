@@ -1,13 +1,12 @@
 #Some options to choose in the setup
-infectionMethod = :wash #wash or drop
-parameterVary = :MCMC #All cells have different parameters?
+infectionMethod = :drop #wash or drop
+parameterVary = :Random #All cells have different parameters?
 
 #Constants for all cell
-const N=100 #number of grid points along one dimensions
+const N=200 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
-const D=95.0*3600 #Diffusion coefficient (μm^2/hr)
 const species = 14 #Number of states within each cell (including virus)
 const moi = 1.0e-2 #Multicity of infection
 
@@ -37,7 +36,7 @@ const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
 
 if parameterVary == :Random
   #Give a unique parameter set for each cells (randomly choosen)
-  percent = 0.05
+  percent = 0.05 #current value ± percent
   sampleDist = @. Uniform((1-percent)*θVals,(1+percent)*θVals)
   θ = reshape.(rand.(sampleDist,nCells),N,N)
 
@@ -46,36 +45,60 @@ elseif parameterVary == :MCMC
   θ = Vector(undef,length(θVals))
   #Load in the MCMC chain
   mcmcChain = CSV.read("Run1.csv",skipto=9_000_000)
+  #Generate a random parameter set index for each cell (i.e. pick random rows)
+  mcmcθIdx = rand(axes(mcmcChain,1),nCells)
   #loop through parameters to see if they're in MCMC chain
   for (i,name) in enumerate(θNames)
     if name ∈ names(mcmcChain)
-      θ[i] = reshape(rand(mcmcChain[!,name],nCells),N,N)
+      θ[i] = reshape(10.0.^mcmcChain[mcmcθIdx,name],N,N)
     else
       θ[i] = fill(θVals[i],N,N)
     end
   end
 
+else
+  θ = θVals
+end
+
+#Discretized 2D Laplacian assuming neumann (no flux) boundary conditions
+#Could be made faster by avoiding allocation e.g. ∇²(Δu,u)
+const ΔIFNβ = zeros(N,N)
+
+function ∇²(Δu,u)
+  #Create an arry to hold the calculation, get dimensions
+
+    n1, n2 = size(u)
+    Δx = 30.0 #Grid spacing (diameter of cell in μm)
+    D=1.0*3600.0 #Diffusion coefficient (μm^2/hr)
+    h = D/Δx^2
+
+    # internal nodes
+    for j = 2:n2-1
+        for i = 2:n1-1
+            @inbounds  Δu[i,j] = h*(u[i+1,j] + u[i-1,j] + u[i,j+1] + u[i,j-1] - 4*u[i,j])
+        end
+    end
+
+    # left/right edges
+    for i = 2:n1-1
+        @inbounds Δu[i,1] = h*(u[i+1,1] + u[i-1,1] + 2*u[i,2] - 4*u[i,1])
+        @inbounds Δu[i,n2] = h*(u[i+1,n2] + u[i-1,n2] + 2*u[i,n2-1] - 4*u[i,n2])
+    end
+
+    # top/bottom edges
+    for j = 2:n2-1
+        @inbounds Δu[1,j] = h*(u[1,j+1] + u[1,j-1] + 2*u[2,j] - 4*u[1,j])
+        @inbounds Δu[n1,j] = h*(u[n1,j+1] + u[n1,j-1] + 2*u[n1-1,j] - 4*u[n1,j])
+    end
+
+    # corners
+    @inbounds Δu[1,1] = h*(2*(u[2,1] + u[1,2]) - 4*u[1,1])
+    @inbounds Δu[n1,1] = h*(2*(u[n1-1,1] + u[n1,2]) - 4*u[n1,1])
+    @inbounds Δu[1,n2] = h*(2*(u[2,n2] + u[1,n2-1]) - 4*u[1,n2])
+    @inbounds Δu[n1,n2] = h*(2*(u[n1-1,n2] + u[n1,n2-1]) - 4*u[n1,n2])
 end
 
 
- function Laplacian1D(n)
-     #Derivative order
-         DerOrder = 2
-     #Approximation order
-         ApproxOrder = 2
-     #Grid spacing (diameter of cell in μm)
-         h = 30.0
-     #Second order approximation of the second derivative
-         L = DerivativeOperator{Float64}(DerOrder,ApproxOrder,h,n,:Neumann0,:Neumann0)
-     return sparse(L)
- end
-
-const Lx = Laplacian1D(N) #x direction of the 1-D Laplacian
-const Ly = Lx' #y direction of the 1-D Laplacian
-
-#Create containers to hold the matrix multiplications
-Ly●IFNβ = zeros(N,N)
-IFNβ●Lx = zeros(N,N)
 
 # Define the discretized PDE as an ODE function
 function Model!(du,u,p,t)
@@ -115,12 +138,8 @@ function Model!(du,u,p,t)
   #Parameters
   k1f, k1r, k3f, k3r, k4f, kcat5, Km5, k5r, kcat6, Km6, kcat7, Km7, kcat8, Km8, k8f, k9f, k10f1, k10f2, k11f, k12f, k13f, k6f, kcat2, Km2, τ4, τ6, τ7, τ8, τ9, τ10, τ11, τ12, τ13, k14f, τ14  = p
 
-  #Calculate diffusion of interferon (Ly*IFN + IFN*Lx)
-  mul!(Ly●IFNβ, Ly, IFNβ)
-  mul!(IFNβ●Lx,IFNβ,Lx)
-
-  #Sum the x and y components
-   L●IFNβ = @. D*(Ly●IFNβ + IFNβ●Lx)
+  #Calculate the diffusion of IFNβ
+  ∇²(ΔIFNβ,IFNβ)
 
   #Update derivatives for each species according to model
   @. d_cGAS = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS)
@@ -129,7 +148,7 @@ function Model!(du,u,p,t)
   @. d_cGAMP = k4f*(cGAStot - cGAS) - k3f*cGAMP*Sting + k3f*(Stingtot - Sting) - τ4*cGAMP
   @. d_IRF3 = -kcat5*IRF3*(Stingtot - Sting) / (Km5 +IRF3) + k5r*(IRF3tot - IRF3)
   @. d_IFNβm = kcat6*(IRF3tot - IRF3) / (Km6 + (IRF3tot - IRF3)) + k6f*IRF7 - τ6*IFNβm
-  @. d_IFNβ = kcat7*IFNβm / (Km7 + IFNβm) - τ7*IFNβ + L●IFNβ #Add the diffusion in here
+  @. d_IFNβ = kcat7*IFNβm / (Km7 + IFNβm) - τ7*IFNβ + ΔIFNβ #Add the diffusion in here
   @. d_STAT = kcat8*IFNβ / (Km8 + IFNβ) * 1.0/(1.0+k8f*SOCSm) - τ8*STAT
   @. d_SOCSm = k9f*STAT - τ9*SOCSm
   @. d_IRF7m = k10f1*STAT + k10f2*IRF7 - τ10*IRF7m
@@ -189,5 +208,3 @@ cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
 
 #Contruct the ODEs
 prob = ODEProblem(Model!,u0,tspan,θ)
-#Solve the problem
-#sol = @time solve(prob,ROCK4(),saveat=0.1)
