@@ -2,17 +2,17 @@ include("Driver.jl")
 
 function KD(parChange)
 
-    KD=1:-0.25:0
+    KnockDownVals=1:-0.25:0
     percentLabels = [string(i)*"%" for i=0:25:100]
-    kdSamples = length(KD)
+    kdSamples = length(KnockDownVals)
 
     IFNAve = Vector(undef,kdSamples)
     IFNStd = Vector(undef,kdSamples)
     solKD = []
-    for (i,percent) in enumerate(KD)
-        θcurrent = copy(prob.p)
-        θcurrent[parChange] *= percent
-        println(θcurrent[[20,23]])
+    for (i,percent) in enumerate(KnockDownVals)
+        θcurrent = prob.p
+        θcurrent.par[parChange] .*= percent
+        println(θcurrent.par[[20,23]])
         probKD = remake(prob; p=θcurrent)
 
         #solKD = solve(probKD,ESERK5(),saveat=0.1)
@@ -38,6 +38,6 @@ function KD(parChange)
 end
 
 
-plotKD = map(KD,[20,23])
+plotKD = map(KD,[23,20])
 savefig(plotKD[1][2],"./Figures/IRF7_KD.pdf")
 savefig(plotKD[2][2],"./Figures/TREX1_KD.pdf")

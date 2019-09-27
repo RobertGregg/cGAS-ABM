@@ -3,15 +3,15 @@ using ProgressMeter, DataFrames
 
 
 #Give a unique parameter set for each cells (randomly choosen), ignore virus parameters?
-percentRange =8
-percents = range(0.01,0.5,length=percentRange)
+percentRange =11
+percents = range(0.01,1.0,length=percentRange)
 
 virusPeaks = Vector(undef,length(percents))
 
 @showprogress 1 "Computing..." for (i,percent) in enumerate(percents)
     global cellsInfected
 
-    sampleDist = @. Uniform((1-percent)*θVals,θVals)
+    sampleDist = @. Uniform(θVals.*(1-percent),θVals.*(1+percent))
     θcurrent = reshape.(rand.(sampleDist,nCells),N,N)
 
     #Reset the infection matrix

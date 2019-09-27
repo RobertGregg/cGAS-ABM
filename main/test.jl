@@ -1,18 +1,30 @@
 using TransformVariables, LogDensityProblems, DynamicHMC,
-    DynamicHMC.Diagnostics, Parameters, Statistics, Random
+    DynamicHMC.Diagnostics, Parameters, Statistics, Random, ModelingToolkit
 
-using DifferentialEquations, Distributions,Plots
-
-f1 = function (du,u,p,t)
-  du[1] = p[1] * u[1] - p[2] * u[1]*u[2]
-  du[2] = -3.0 * u[2] + u[1]*u[2]
-end
+using DifferentialEquations, DiffEqParamEstim, Distributions,Plots
 
 
-p = [1.5,1.0]
-u0 = [1.0;1.0]
-tspan = (0.0,11.0)
+## Define the ODE model
+@parameters t a b c
+@variables u1(t) u2(t)
+@derivatives D'~t
+
+eqs = [
+D(u1) ~ a*u1 - b*u1*u2
+D(u2) ~ -c*u2 + u1*u2
+]
+
+de = ODESystem(eqs)
+f1 = ODEFunction(de,[u1,u2],[a,b,c])
+
+
+
+
+p = [1.5,1.0,3.0]
+u0 = ones(length(eqs))
+tspan = (0.0,10.0)
 prob = ODEProblem(f1,u0,tspan,p)
+alg = Tsit5()
 sol = solve(prob)
 
 tData = range(0.0,10.0,length=20)
@@ -31,32 +43,35 @@ struct DataODE{T,D,P}
 end
 
 
-
-
 function (problem::DataODE)(θ)
     @unpack times,data,prob = problem       # extract the data
 
     #Solve the ODE
     currentprob = remake(prob;u0=convert.(eltype(θ),prob.u0),p=θ)
-    currentsol = solve(currentprob,Rodas4())
+    currentsol = solve(currentprob)
 
     if sol.retcode != :Success
         return Inf
     else
         # SSE
-        err = 0.0
-            for (i,t) in enumerate(times)
-                err += sum((currentsol(t) .- data[i]).^2)
-            end
-        return err
+        return mapreduce(x -> sum(x.^2), +, currentsol(times).u .- data)
     end
 end
 
-p = DataODE(tData,solData,prob)
-α = (α1=1.5,α2=0.5)
 
-trans = as((α1 = as(Real, 0, 10), α2 = as(Real, 0, 10)))
-ℓ = TransformedLogDensity(trans, p)
+
+
+lossFunc = DataODE(tData,solData,prob)
+
+SumSqErr = build_loss_objective(prob,alg,L2Loss(tData,hcat(solData...)))
+
+
+
+
+
+
+trans = as((a = as(Real, 0, 10), b = as(Real, 0, 10),c = as(Real, 0, 10)))
+ℓ = TransformedLogDensity(trans, SumSqErr)
 ∇ℓ = ADgradient(:ForwardDiff, ℓ)
 
 results = mcmc_with_warmup(Random.GLOBAL_RNG, ∇ℓ, 10_000)

@@ -4,7 +4,7 @@ Maxval = maximum(sol[:,:,7,:])
 #Loop through all time points to make an animation
 anim = @animate for i = tspan[1]:0.1:tspan[2]
     G = sol(i)[:,:,7]
-    H = sol(i)[:,:,14]
+    H = 10.0 .* sol(i)[:,:,14]
     plot(diag(G),ylims=(0,Maxval),title="Time = " * string(i) * " hrs",legend=false)
     plot!(diag(H))
 end
@@ -13,20 +13,21 @@ gif(anim,"CellGridAnimation.gif")
 
 
 
-Maxval = maximum(sol[:,:,7,:])
+Maxval = maximum(sol[:,:,14,:])
 #Loop through all time points to make an animation
 anim = @animate for i = tspan[1]:0.1:tspan[2]
-    G = sol(i)[:,:,7]
-    heatmap(G,clims=(0,Maxval),title="Time = " * string(i) * " hrs")
+    G = sol(i)[:,:,14]
+    heatmap(G,clims=(0.0,Maxval),title="Time = " * string(i) * " hrs")
 end
 
-gif(anim,"CellGridAnimation.gif")
+gif(anim,"CellGridAnimationlow.gif")
 
+i=10.0
+heatmap(sol(i)[:,:,14],clims=(0.0,Maxval),title="Time = " * string(i) * " hrs")
 
-
-stateToPlot = 7
+stateToPlot = 14
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]
-plot!(sol.t,plotState[:],leg=false)
+plot(sol.t,plotState[:],leg=false,framestyle=:box)
 title!(statesNames[stateToPlot])
 xlabel!("Time (hrs)")
 ylabel!("(nM)")
@@ -34,22 +35,26 @@ ylabel!("(nM)")
 
 
 
+
+
 #Plotting just the infected cells
 
-p = Vector(undef,species)
+plt = Vector(undef,species)
 for (i,name) in enumerate(statesNames)
 
-    plotState = []
+    plotState = Vector(undef,sum(u0[:,:,2] .> 0.0))
+    j=1
     for coord in cellIndicies
-        if !isinf(cellsInfected[coord,1])
-            push!(plotState,sol[coord,i,:])
+        if u0[coord,2] > 0.0
+            plotState[j] = sol[coord,i,:]
+            j += 1
         end
     end
-    p[i]=plot(sol.t,plotState[:],leg=false,framestyle=:box)
+    plt[i]=plot(sol.t,plotState[:],leg=false,framestyle=:box)
     title!(statesNames[i])
     xlabel!("Time (hrs)")
     ylabel!("(nM)")
 end
 
-plot(p...,size=(1200,800))
+plot(plt...,size=(1200,800))
 savefig("AllStates.pdf")
