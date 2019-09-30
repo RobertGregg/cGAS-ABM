@@ -1,16 +1,16 @@
 #Some options to choose in the setup
-infectionMethod = :drop #wash or drop
+infectionMethod = :Wash #Wash or Drop
 parameterVary = :Random #All cells have different parameters?
 
 #Constants for all cell
-const N=100 #number of grid points along one dimensions
+const N=200 #number of grid points along one dimensions
 const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const species = 14 #Number of states within each cell (including virus)
 const moi = 1.0e-2 #Multicity of infection
 
-#Converts molecules to nM
+#Functtion that converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
 
 #Paramter values for the ODEs
@@ -27,7 +27,6 @@ append!(θVals,θVirus) #Append the virus parameters to the orginal parameters
 
 
 const tspan = (0.0,48.0) #Time span for simulation
-#const tstop = 1:tspan[2] #Times where the simulation stops and check for virus movement
 const tstop = sort(rand(Uniform(tspan[1],tspan[2]),1000)) #Times where the simulation stops and check for virus movement
 const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
                      "SOCSm","IRF7m","TREX1m","IRF7","TREX1","Virus"] #for plotting
@@ -48,29 +47,30 @@ elseif parameterVary == :MCMC
   #Generate a random parameter set index for each cell (i.e. pick random rows)
   mcmcθIdx = rand(axes(mcmcChain,1),nCells)
   #loop through parameters to see if they're in MCMC chain
+  #(Not all of the parameters were fitted in the MCMC)
   for (i,name) in enumerate(θNames)
     if name ∈ names(mcmcChain)
-      θ[i] = reshape(10.0.^mcmcChain[mcmcθIdx,name],N,N)
+      θ[i] = reshape(10.0.^mcmcChain[mcmcθIdx,name],N,N) #Pars in log space
     else
       θ[i] = fill(θVals[i],N,N)
     end
   end
 
 else
-  θ = θVals
+  θ = θVals #Just keep the parameters as is
 end
 
 #Discretized 2D Laplacian assuming neumann (no flux) boundary conditions
-#Could be made faster by avoiding allocation e.g. ∇²(Δu,u)
-const ΔIFNβ = zeros(N,N)
+#2nd order central difference approximation
+#Made faster by avoiding allocation e.g. ∇²(Δu,u)
+const ΔIFNβ = zeros(N,N) #Define memory space to hold the Laplacian
 
 function ∇²(Δu,u)
-  #Create an arry to hold the calculation, get dimensions
-
+  #Get dimensions of the input and define some constants
     n1, n2 = size(u)
-    Δx = 30.0 #Grid spacing (diameter of cell in μm)
-    D=95.0*3600.0 #Diffusion coefficient (μm^2/hr)
-    h = D/Δx^2
+    const Δx = 30.0 #Grid spacing (diameter of cell in μm)
+    const D=97.5*3600.0 #Diffusion coefficient (μm^2/hr)
+    const h = D/Δx^2
 
     # internal nodes
     for j = 2:n2-1
@@ -135,6 +135,7 @@ function Model!(du,u,p,t)
 
   #Parameters
   k1f, k1r, k3f, k3r, k4f, kcat5, Km5, k5r, kcat6, Km6, kcat7, Km7, kcat8, Km8, k8f, k9f, k10f1, k10f2, k11f, k12f, k13f, k6f, kcat2, Km2, τ4, τ6, τ7, τ8, τ9, τ10, τ11, τ12, τ13, k14f, τ14 = p.par
+  #Constants from the mass balances
   cGAStot, Stingtot, IRF3tot = p.mass
 
   #Calculate the diffusion of IFNβ
@@ -142,7 +143,7 @@ function Model!(du,u,p,t)
 
   #Update derivatives for each species according to model
   @. d_cGAS = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS)
-  @. d_DNA = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS) - kcat2*TREX1*DNA / (Km2 + DNA) + DNA*(0.55-DNA)/0.55
+  @. d_DNA = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS) - kcat2*TREX1*DNA / (Km2 + DNA) #+ DNA*(0.55-DNA)/0.55
   @. d_Sting = -k3f*cGAMP*Sting + k3r*(Stingtot - Sting)
   @. d_cGAMP = k4f*(cGAStot - cGAS) - k3f*cGAMP*Sting + k3f*(Stingtot - Sting) - τ4*cGAMP
   @. d_IRF3 = -kcat5*IRF3*(Stingtot - Sting) / (Km5 +IRF3) + k5r*(IRF3tot - IRF3)
@@ -155,37 +156,34 @@ function Model!(du,u,p,t)
   @. d_IRF7 = k12f*IRF7m - τ12*IRF7
   @. d_TREX1 = k13f*TREX1m - τ13*TREX1
   @. d_Virus = k14f*DNA - τ14*Virus
-  #@. d_Virus = DNA*(1.0-DNA/k14f)
-  #println(mean.([kcat7.*IFNβm ./ (Km7 .+ IFNβm), -τ7.*IFNβ, ΔIFNβ]))
 end
 
-#Loop though all of the species and determine initial conditions
+#Define the initial conditions
+u0 = zeros(N,N,species)
 
-u0 = zeros(N,N,species) #Initial Condition
+#Define a set of indices for looping through every cell
+const cellIndicies = CartesianIndices(u0[:,:,1])
 
 #These species are not starting at zero
 nonZeroSpeciesIdx = [1,3,5] #cGAS, Sting, IRF3
-nonZeroSpeciesValues = m2c([1e3, 1e3, 1e4])
-cGAStot, Stingtot, IRF3tot = nonZeroSpeciesValues
+nonZeroSpeciesValues = m2c([1e3, 1e3, 1e4]) #convert to concentration
+cGAStot, Stingtot, IRF3tot = nonZeroSpeciesValues #unpack parameters
 
 #Loop through non-zero species and update their concentrations
 for (idx,val) in zip(nonZeroSpeciesIdx,nonZeroSpeciesValues)
     u0[:,:,idx] .=  val
 end
 
-#Define a set of indices for looping through every cell
-const cellIndicies = CartesianIndices(u0[:,:,1])
-
-
-if infectionMethod == :wash
-
+#DNA initial condition, how is the infection introduced to the cells?
+if infectionMethod == :Wash
+  #Assume a poisson ditribution to randomly choose each cell's level of infection
   probDistInfected = Poisson(moi)
   u0[:,:,2] = @. m2c(1e3*rand(probDistInfected,N,N))
 
-elseif infectionMethod == :drop
-
-  circleOrigin = [10,10] #Where is the drop
-  circleRadiusSquared = 15^2 #How big is the drop
+elseif infectionMethod == :Drop
+  #Define a region on the domain where cells will be infected
+  circleOrigin = [10,10] #Where is the center of the drop?
+  circleRadiusSquared = 15^2 #How big is the drop?
   #Calculate squared distances
   sqDist(x,c) = reduce(+, @. (x-c)^2)
   #Loop though cells and check if they are infected
@@ -198,6 +196,7 @@ elseif infectionMethod == :drop
 
 end
 
+
 #Keep track of infected cells (zero is healthy and one is infected)
 #const cellsInfected = zeros(Int8,N,N,length(tstop)+1) #Make constant when not testing
 #cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 1
@@ -205,12 +204,14 @@ end
 global cellsInfected = fill(Inf,N,N) #Make constant when not testing
 cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
 
-mutable struct ParContainer
-  #par::Vector{Float64} #Rate Constants
-  par::Array{Array{Float64,2},1}
+#Define a structure to hold all the parameters for the ODE solver
+mutable struct ParContainer{T}
+  par::T #Rate Constants
   mass::Vector{Array{Float64,2}} #Mass balances
 end
+
+#Create an instance of the structure
 θ = ParContainer(θ,[fill(i,N,N) for i in nonZeroSpeciesValues])
 
-#Contruct the ODEs
+#Contruct the ODE problem
 prob = ODEProblem(Model!,u0,tspan,θ)

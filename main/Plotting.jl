@@ -13,17 +13,17 @@ gif(anim,"CellGridAnimation.gif")
 
 
 
-Maxval = maximum(sol[:,:,14,:])
+Maxval = maximum(sol[:,:,7,:])
 #Loop through all time points to make an animation
 anim = @animate for i = tspan[1]:0.1:tspan[2]
-    G = sol(i)[:,:,14]
+    G = sol(i)[:,:,7]
     heatmap(G,clims=(0.0,Maxval),title="Time = " * string(i) * " hrs")
 end
 
 gif(anim,"CellGridAnimationlow.gif")
 
-i=10.0
-heatmap(sol(i)[:,:,14],clims=(0.0,Maxval),title="Time = " * string(i) * " hrs")
+
+
 
 stateToPlot = 14
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]

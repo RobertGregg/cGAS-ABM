@@ -58,7 +58,7 @@ function InfectAffect(integrator)
         #Probs[coord]
         if rand() < Probs[coord] #infect the cell
             #Add Viral DNA to the cell
-            u[coord,2] = rand(Uniform(0.0,m2c(1e3)))
+            u[coord,2] = m2c(1e3)#rand(Uniform(0.0,m2c(1e3)))
             #Mark that the cell was infected
             cellsInfected[coord] = integrator.t
         end
@@ -73,7 +73,7 @@ end
 function InfectProbability(u)
 
     #Takes in a viral concentration and outputs a probability for infection
-    d(vConc) = ccdf(Normal(0.5*m2c(1e3),0.1),vConc)
+    d(vConc) = ccdf(Normal(m2c(1e3),0.1),vConc)
 
     #Initialize an array of probabilities
     probInfected = zeros(N,N)
