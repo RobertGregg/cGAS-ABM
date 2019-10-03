@@ -25,18 +25,7 @@ end
 
 #Trading readbility for speed here
 function InfectCondition(u,t,integrator)
-    #println(integrator.t)
-
     t ∈ tstop
-
-    # SunDials_Reshape(integrator)
-    #cutoff = m2c(1000.)
-    #@inbounds for i = 1:size(u)[1], j=1:size(u)[2]
-    #    if u[i,j,end] > cutoff
-    #        return true
-    #    end
-    #end
-    #return false
 end
 
 function InfectAffect(integrator)
@@ -58,7 +47,7 @@ function InfectAffect(integrator)
         #Probs[coord]
         if rand() < Probs[coord] #infect the cell
             #Add Viral DNA to the cell
-            u[coord,2] = m2c(1e3)#rand(Uniform(0.0,m2c(1e3)))
+            u[coord,2] = rand(Uniform(0.0,m2c(1e3)))
             #Mark that the cell was infected
             cellsInfected[coord] = integrator.t
         end
@@ -88,7 +77,7 @@ function InfectProbability(u)
             probNotInfected = 1.0
 
             if cellsInfected[I]==Inf #If it is a healthy cell...
-            #Loop through all of the neighbors (and current grid point)
+            #Loop through all of the neighbors
                 for J in max(Ifirst, I-Ifirst):min(Ilast, I+Ifirst)
                     if !isinf(cellsInfected[J]) & (I != J) #count only infected neighbors, skip self
                         probNotInfected *= d(u[J,14])
@@ -156,8 +145,22 @@ end
 
 cb_dead = DiscreteCallback(DeadCondition,DeadAffect!)
 
+#############################
+#Callback 4: Stop simulation when all cells are infected
+#############################
+
+function StopCondition(u,t,integrator)
+    ~any(isinf.(cellsInfected))
+end
+
+function StopAffect(integrator)
+    terminate!(integrator)
+end
+
+cb_stop = DiscreteCallback(StopCondition,StopAffect)
 
 
 #Collect all of the callbacks
 cb_12 = CallbackSet(cb_infect,cb_challenge)
 cb_13 = CallbackSet(cb_infect,cb_dead)
+cb_14 = CallbackSet(cb_infect,cb_stop)

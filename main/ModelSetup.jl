@@ -1,6 +1,6 @@
 #Some options to choose in the setup
 infectionMethod = :Wash #Wash or Drop
-parameterVary = :Random #All cells have different parameters?
+parameterVary = :None #Random, MCMC,StochIFN, or None
 
 #Constants for all cell
 const N=200 #number of grid points along one dimensions
@@ -8,7 +8,7 @@ const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const species = 14 #Number of states within each cell (including virus)
-const moi = 1.0e-2 #Multicity of infection
+const moi = 1.0e-3 #Multicity of infection
 
 #Functtion that converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
@@ -56,6 +56,11 @@ elseif parameterVary == :MCMC
     end
   end
 
+elseif parameterVary == :StochIFN
+  #Keep most parameters the same
+  θ = fill.(θVals,N,N)
+  #kcat7 produces IFN, make it nonzero ~20% of the time
+  θ[11] .= rand([zeros(4)...,θVals[11]],N,N)
 else
   θ = θVals #Just keep the parameters as is
 end
@@ -68,9 +73,9 @@ const ΔIFNβ = zeros(N,N) #Define memory space to hold the Laplacian
 function ∇²(Δu,u)
   #Get dimensions of the input and define some constants
     n1, n2 = size(u)
-    const Δx = 30.0 #Grid spacing (diameter of cell in μm)
-    const D=97.5*3600.0 #Diffusion coefficient (μm^2/hr)
-    const h = D/Δx^2
+    Δx = 32.0 #Grid spacing (diameter of cell in μm)
+    D=97.5*3600.0 #Diffusion coefficient (μm^2/hr)
+    h = D/Δx^2
 
     # internal nodes
     for j = 2:n2-1
@@ -183,7 +188,7 @@ if infectionMethod == :Wash
 elseif infectionMethod == :Drop
   #Define a region on the domain where cells will be infected
   circleOrigin = [10,10] #Where is the center of the drop?
-  circleRadiusSquared = 15^2 #How big is the drop?
+  circleRadiusSquared = 50^2 #How big is the drop?
   #Calculate squared distances
   sqDist(x,c) = reduce(+, @. (x-c)^2)
   #Loop though cells and check if they are infected
@@ -201,7 +206,7 @@ end
 #const cellsInfected = zeros(Int8,N,N,length(tstop)+1) #Make constant when not testing
 #cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 1
 #Keep track of infected cells (save time when infected, Inf means not infected)
-global cellsInfected = fill(Inf,N,N) #Make constant when not testing
+cellsInfected = fill(Inf,N,N) #Make constant when not testing
 cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
 
 #Define a structure to hold all the parameters for the ODE solver

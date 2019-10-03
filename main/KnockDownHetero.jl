@@ -12,27 +12,29 @@ function KD(parChange)
 
     for (i,percent) in enumerate(KnockDownVals)
         θcurrent = deepcopy(θ)
-        θcurrent.par[parChange] = θcurrent.par[parChange] * percent
-
-        println(θcurrent.par[[20,23]])
+        θcurrent.par[parChange] .= θcurrent.par[parChange] .* percent
+        println(mean(θcurrent.par[parChange]))
 
         probKD = remake(prob; p=θcurrent)
         solKD = solve(probKD,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)
 
         IFNAve[i] = [mean(solKD[:,:,7,t]) for t in 1:length(solKD.t)]
         IFNStd[i] = [std(solKD[findall(u0[:,:,2] .> 0),7,t]) for t in 1:length(solKD.t)]
+        IFNall[i] = [solKD[coord,7,:] for coord in cellIndicies]
     end
 
     p = plot()
+    linCol = [:red,:gold,:green,:blue,:purple]
 
-    for (μ,σ,i) in zip(IFNAve,IFNStd,1:kdSamples)
-        #ribbon =σ
-        plot!(p,tspan[1]:0.1:tspan[2],μ,label=percentLabels[i],legend=:right,framestyle = :box,legendtitle="Percent Knockdown",linewidth = 2)
+    for (IFNncurr,i) in zip(IFNall,1:kdSamples)
+        plot!(p,tspan[1]:0.1:tspan[2],IFNncurr[:],label=percentLabels[i],
+        legend=:false,framestyle = :box,
+        linewidth = 2,linecolor=linCol[i],linealpha = 0.1)
     end
 
     title!(statesNames[7])
     xlabel!("Time (hrs)")
-    ylabel!("Average $(statesNames[7]) (nM)")
+    ylabel!("$(statesNames[7]) (nM)")
     xticks!(0:12:48)
 
     #return p
@@ -40,6 +42,5 @@ function KD(parChange)
 end
 
 
-plotKD = map(KD,[20,23])
-savefig(plotKD[1][2],"../Figures/IRF7_KD.pdf")
-savefig(plotKD[2][2],"../Figures/TREX1_KD.pdf")
+plotKD = map(KD,[23])
+plotKD[1][2]
