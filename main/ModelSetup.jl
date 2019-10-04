@@ -1,6 +1,6 @@
 #Some options to choose in the setup
 infectionMethod = :Wash #Wash or Drop
-parameterVary = :None #Random, MCMC,StochIFN, or None
+parameterVary = :Random #Random, MCMC,StochIFN, or None
 
 #Constants for all cell
 const N=200 #number of grid points along one dimensions
