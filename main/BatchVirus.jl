@@ -51,7 +51,7 @@ const simNum = 5
 	return (timePoints,infectPercent)
 end
 
-percents = 0.05:0.2
+percents = range(0.05,0.2,length=4)
 simPercent = Vector(undef,length(percents))
 plt = plot()
 
