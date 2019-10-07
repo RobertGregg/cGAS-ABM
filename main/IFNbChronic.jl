@@ -5,8 +5,8 @@ include("Driver.jl")
 parRange = 20
 solutionArray = Vector(undef,parRange^2)
 
-kcat8Vals = range(1.0,100.0,length=parRange)
-τ7Vals = exp10.(range(-2.0,2.0,length=parRange))
+kcat8Vals = range(1.0,50.0,length=parRange)
+τ7Vals = exp10.(range(0.0,2.0,length=parRange))
 
 #Create an iterator to loop through the parameters (iterator loops through columns, need to switch τ7 and kcat8)
 iter = zip(Iterators.product(τ7Vals, kcat8Vals),1:length(solutionArray))

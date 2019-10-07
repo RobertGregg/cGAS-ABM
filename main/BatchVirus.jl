@@ -6,8 +6,8 @@ using Distributed
 addprocs(10)
 
 @everywhere include("Driver.jl")
+@everywhere using JLD2, FileIO, UnicodePlots
 
-#How many simulations to run
 
 #=
 function VirusRandomPar(prob,i,repeat)
@@ -21,7 +21,8 @@ sim = solve(ensembleProb,CVODE_BDF(linear_solver=:GMRES),callback=cb_infect,
             tstops=tstop,trajectories=10)
 =#
 
-simNum = 10
+#How many simulations to run
+simNum = 5
 problems = Vector(undef,simNum)
 
 for i=1:simNum
@@ -33,3 +34,20 @@ end
 @everywhere VirusSolver(prob) = solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb_infect,tstops=tstop)
 
 sim = pmap(VirusSolver,problems)
+
+
+timePoints = [sim[i].t for i=1:simNum]
+infectPercent = [zeros(length(sim[i].t)) for i=1:simNum]
+
+for (i,currentSol) in enumerate(sim)
+	for t = 1:length(currentSol.t)
+		infectPercent[i][t] = 1.0 - sum(currentSol[:,:,2,t] .== 0.0)/N^2
+	end
+end
+
+@save "infectPercent.jld2" infectPercent, timePoints
+
+plt = plot(timePoints,infectPercent,legend=false)
+savefig("../Figures/InfectionVary.pdf")
+
+
