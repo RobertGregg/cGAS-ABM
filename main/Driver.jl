@@ -13,7 +13,7 @@ include("ModelSetup.jl")
 include("Callbacks.jl")
 
 #What type of infection are we performing?
-infectionType = :None #ISD, Virus, None
+infectionType = :Virus #ISD, Virus, None
 
 if infectionType == :ISD
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)

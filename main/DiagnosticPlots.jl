@@ -33,7 +33,7 @@ gif(anim,"../Figures/CrossSectionAnimation.gif")
 #Plot dynamics for a particular state
 ########################################################################
 
-stateToPlot = 6
+stateToPlot = 7
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]
 plot(sol.t,plotState[:],leg=false,framestyle=:box)
 title!(statesNames[stateToPlot])
