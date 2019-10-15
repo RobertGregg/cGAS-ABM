@@ -36,7 +36,7 @@ end
 
 
 plot(log10.(moiRange),100 .*mean.(cellInfectedTot,dims=2),
-            marker=:auto,frame=:box,label=string.(collect(vars)),legendtitle="Variability")
+            ribbon=std.(cellInfectedTot,dims=2),frame=:box,label=string.(collect(vars)),legendtitle="Variability")
 xlabel!("log10(MOI)")
 ylabel!("Total Cells Infected (%)")
 
