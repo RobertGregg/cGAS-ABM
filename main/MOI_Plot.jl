@@ -35,10 +35,12 @@ for (i,newVar) in enumerate(vars)
 end
 
 
-cellInfectedTot = newTot
 plot(log10.(moiRange),100 .*mean.(cellInfectedTot,dims=2),
             marker=:auto,frame=:box,label=string.(collect(vars)),legendtitle="Variability")
 xlabel!("log10(MOI)")
 ylabel!("Total Cells Infected (%)")
 
 savefig("../Figures/MOI.pdf")
+
+using JLD2, FileIO
+@save "newTot.jld2" cellInfectedTot
