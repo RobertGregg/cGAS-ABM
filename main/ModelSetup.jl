@@ -8,7 +8,7 @@ const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const species = 14 #Number of states within each cell (including virus)
-const moi = 1.0e-1 #Multicity of infection
+const moi = 1.0e-2 #Multicity of infection
 
 #Functtion that converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
@@ -202,9 +202,7 @@ elseif infectionMethod == :Drop
 end
 
 
-#Keep track of infected cells (zero is healthy and one is infected)
-#const cellsInfected = zeros(Int8,N,N,length(tstop)+1) #Make constant when not testing
-#cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 1
+
 #Keep track of infected cells (save time when infected, Inf means not infected)
 cellsInfected = fill(Inf,N,N) #Make constant when not testing
 cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
