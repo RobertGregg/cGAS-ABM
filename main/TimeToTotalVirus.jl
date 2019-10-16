@@ -1,20 +1,23 @@
-include("Driver.jl")
+function cellStates(t)
+    #Number of healthy cells at time t
+    totaHealthy = sum(θ.cellsInfected .> t)
+    #Number of dead cells at time t
+    totalDead = sum(θ.cellsDead .< t)
+    #Number of infected cells at time t
+    totalInfected = nCells - totaHealthy - totalDead
+    return [totaHealthy,totalInfected,totalDead]
+end
 
-sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb_14,tstops=tstop)
+allstates = zeros(Int64,length(sol.t),3)
 
-f(x) =  1 - sum(sol(x)[:,:,2] .== 0.0)/N^2
-plot!(sol.t,f.(sol.t),framestyle = :box,legend=false)
+for i=1:length(sol.t)
+    allstates[i,:] = cellStates(sol.t[i])
+end
+
+plot(sol.t,allstates,framestyle = :box,linewidth=2,
+    labels=[:Healthy,:Infected,:Dead],size=(500,300))
 xticks!(0:12:48)
-ylims!((0,1))
-xlabel!("Time (hrs)")
-ylabel!("Infected Cell %")
+xlabel!("Time (hr)")
+ylabel!("Number of Cells")
 
-
-savefig("../Figures/HeteroVirus.pdf")
-
-cellsInfected_plot = copy(cellsInfected)
-cellsInfected_plot[isinf.(cellsInfected_plot)] .= -1.0
-heatmap(cellsInfected_plot,color=:viridis, clims=(0,10))
-title!("Time of Infection")
-
-savefig("../Figures/InfectionTime.pdf")
+savefig("../Figures/CellStates.pdf")

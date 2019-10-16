@@ -11,14 +11,14 @@ using StatsPlots #For graphing
 #Include Model and Callback functions
 include("ModelSetup.jl")
 include("NewVirusCB.jl")
-include("Callbacks.jl")
+#include("Callbacks.jl")
 
 #What type of infection are we performing?
-infectionType = :None #ISD, Virus, None
+infectionType = :Virus #ISD, Virus, None
 
 if infectionType == :ISD
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)
 
 elseif infectionType == :Virus
-    sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1,callback=cbVec)
+    sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1,callback=cb)
 end
