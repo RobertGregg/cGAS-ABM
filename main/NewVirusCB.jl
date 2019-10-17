@@ -1,11 +1,11 @@
 #Continuous callback
 
-#Create an array that keeps track of whether or not a cell has tried to infect neighbors
-const infectFirstAttempt = trues(N,N)
-
 #############################
 #Callback 1: healthy → Infect
 #############################
+
+#Create an array that keeps track of whether or not a cell has tried to infect neighbors
+const infectFirstAttempt = trues(N,N)
 
 #Cells are infected after a certain viral load is met (with μ=800 virons, σ=200 virons)
 const maxViralLoad = rand(Normal(m2c(800.0),m2c(200.0)),N,N)
@@ -26,7 +26,7 @@ end
 
 function TryInfect(integrator)
     #Probability that an infected cell will spread infection
-    chanceOfInfection = Bernoulli(0.5)
+    chanceOfInfection = Bernoulli(0.8)
     cellsInfected = integrator.p.cellsInfected
     @show integrator.t
 
@@ -35,11 +35,11 @@ function TryInfect(integrator)
 
 
     #Loop through all of the infectious cells
-    for I in findall(uReshaped[:,:,end] .> maxViralLoad)
+     for I in findall(uReshaped[:,:,end] .> maxViralLoad)
         #Loop through all neighbors to see if they get infected
         for J in max(Ifirst, I-Ifirst):min(Ilast, I+Ifirst)
             #If the cell is healthy and not the current cell try to infect
-            if isinf(cellsInfected[J]) && (I != J) && rand(chanceOfInfection)
+            @inbounds if isinf(cellsInfected[J]) && (I != J) && rand(chanceOfInfection)
                 #Add Viral DNA to the cell
                 uReshaped[J,2] = rand(Uniform(0.0,m2c(1e3)))
                 #Mark that the cell was infected
