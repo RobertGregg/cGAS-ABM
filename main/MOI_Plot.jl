@@ -14,10 +14,11 @@ for (i,newVar) in enumerate(vars)
             probDistInfected = Poisson(newMOI)
             u0[:,:,2] = @. m2c(1e3*rand(probDistInfected,N,N))
 
-            #reset the matrix keeping track of the infected cells
-            cellsInfected = fill(Inf,N,N) #Make constant when not testing
-            cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
-
+            #Reset the parameters
+            θ.cellsInfected = fill(Inf,N,N) #Make constant when not testing
+            θ.cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
+            θ.deathParameter =  ones(N,N)
+            θ.cellsDead = fill(Inf,N,N)
             #Change the parameters
             if newVar == 0.0
                 θ.par = fill.(θVals,N,N)
@@ -27,7 +28,7 @@ for (i,newVar) in enumerate(vars)
             end
 
             probNew = remake(prob; u0=u0, p=θ)
-            solNew = @time solve(probNew,CVODE_BDF(linear_solver=:GMRES),saveat=0.1,callback=cbVec)
+            solNew = @time solve(probNew,CVODE_BDF(linear_solver=:GMRES),callback=cb)
 
             cellInfectedTot[i][j,k] = 1.0 - sum(solNew(tspan[2])[:,:,2] .== 0.0)/N^2
         end

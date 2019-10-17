@@ -24,17 +24,7 @@ elseif infectionType == :Virus
 end
 
 
-#TODO Remove later, just to test larger simulation on server
-
-#Get the max value for IFNβ concentration for whole simulation
-Maxval = maximum(sol[:,:,7,:])
-#Loop through time points to make an animation
-anim = @animate for i = tspan[1]:0.1:tspan[2]
-    heatmap(sol(i)[:,:,7],clims=(0.0,Maxval),
-            title="Time = " * string(i) * " hrs")
-end
-
-gif(anim,"../Figures/InterferonAnimation.gif")
+#TODO Where should this go?
 
 function cellStates(t)
     #Number of healthy cells at time t
@@ -45,19 +35,3 @@ function cellStates(t)
     totalInfected = nCells - totaHealthy - totalDead
     return [totaHealthy,totalInfected,totalDead]
 end
-
-allStates = zeros(Int64,length(sol.t),3)
-
-for i=1:length(sol.t)
-    allStates[i,:] = cellStates(sol.t[i])
-end
-
-plot(sol.t,allStates,framestyle = :box,linewidth=2,
-    labels=[:Healthy,:Infected,:Dead],size=(500,300))
-xticks!(0:12:48)
-xlabel!("Time (hr)")
-ylabel!("Number of Cells")
-
-savefig("../Figures/CellStates.pdf")
-
-plot(diff(allStates,dims=1),layout=3)

@@ -26,9 +26,9 @@ end
 
 function TryInfect(integrator)
     #Probability that an infected cell will spread infection
-    chanceOfInfection = Bernoulli(0.8)
+    chanceOfInfection = Bernoulli(0.5)
     cellsInfected = integrator.p.cellsInfected
-    @show integrator.t
+    #@show integrator.t
 
     #Sundials does not presereve problem shape...
     uReshaped = reshape(integrator.u,N,N,species)
@@ -85,7 +85,7 @@ function KillCell(integrator)
     pastTimeOfDeath = (integrator.t .- cellsInfected) .> time2Death
     isAlive = isinf.(integrator.p.cellsDead)
     targets = findall(isAlive .& pastTimeOfDeath)
-    println(sum(integrator.p.deathParameter .== 0.0))
+    #println(sum(integrator.p.deathParameter .== 0.0))
     #Set their deathParameter to stop all cell function
     integrator.p.deathParameter[targets] .= 0.0
     #Mark time of death
