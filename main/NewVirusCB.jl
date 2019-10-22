@@ -4,9 +4,6 @@
 #Callback 1: healthy → Infect
 #############################
 
-#Create an array that keeps track of whether or not a cell has tried to infect neighbors
-const infectFirstAttempt = trues(N,N)
-
 #Cells are infected after a certain viral load is met (with μ=800 virons, σ=200 virons)
 const maxViralLoad = rand(Normal(m2c(800.0),m2c(200.0)),N,N)
 
@@ -15,7 +12,7 @@ function CheckInfect(u,t,integrator)
     uReshaped =  reshape(u,N,N,species)
 
     #Check the whole virus grid for cells with viral conc. greater than 0.4 nM
-    return any( @. (uReshaped[:,:,end] > maxViralLoad) & infectFirstAttempt)
+    return any( @. (uReshaped[:,:,end] > maxViralLoad) & integrator.p.infectFirstAttempt)
 end
 
 
@@ -47,7 +44,7 @@ function TryInfect(integrator)
             end
         end
         #This cell has used its one attempt to infect neighboring cells
-        infectFirstAttempt[I] = false
+        integrator.p.infectFirstAttempt[I] = false
     end
 
     integrator.u = uReshaped[:]

@@ -23,11 +23,12 @@ function KD(parChange)
         IFNStd[i] = [std(solKD[findall(u0[:,:,2] .> 0),7,t]) for t in 1:length(solKD.t)]
     end
 
-    p = plot()
+    plt = plot()
 
     for (μ,σ,i) in zip(IFNAve,IFNStd,1:kdSamples)
         #ribbon =σ
-        plot!(p,tspan[1]:0.1:tspan[2],μ,label=percentLabels[i],legend=:right,framestyle = :box,legendtitle="Percent Knockdown",linewidth = 2)
+        plot!(plt,tspan[1]:0.1:tspan[2],μ,ribbon =σ,label=percentLabels[i], fillalpha=0.3,
+        legend=:right,framestyle = :box,legendtitle="Percent Knockdown",linewidth = 2,linealpha=1.0)
     end
 
     title!(statesNames[7])
@@ -36,7 +37,7 @@ function KD(parChange)
     xticks!(0:12:48)
 
     #return p
-    return (solKD,p)
+    return (solKD,plt)
 end
 
 

@@ -8,7 +8,7 @@ const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const species = 14 #Number of states within each cell (including virus)
-const moi = 1.0e-2 #Multicity of infection
+const moi = 1.0e-1 #Multicity of infection
 
 #Functtion that converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
@@ -18,9 +18,9 @@ m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
 :Km7, :kcat8, :Km8, :k8f, :k9f, :k10f1, :k10f2, :k11f, :k12f, :k13f, :k6f, :kcat2,
 :Km2, :τ4, :τ6, :τ7, :τ8, :τ9, :τ10, :τ11, :τ12, :τ13, :k14f,:τ14]
 θVals = [2.6899, 4.8505, 0.0356, 7.487, 517.4056, 22328.3852, 11226.3682,0.9341,
-         206.9446, 10305.461, 47639.95,3.8474, 13.006, 78.2048, 0.0209,
+         206.9446, 10305.461, 47639.70295,3.8474, 13.006, 78.2048, 0.0209,
          0.0059, 0.001, 0.0112, 0.001, 99.9466, 15.1436,0.0276, 237539.3249,
-         61688.259, 0.96, 0.347, 12.8736,1.2399, 1.5101, 0.347, 0.165, 6.9295,
+         61688.259, 0.96, 0.347, 12.2428736,1.2399, 1.5101, 0.347, 0.165, 6.9295,
          0.0178]
 θVirus = [1.0, 1.0] # k14f τ14 (Virus Parameters)
 append!(θVals,θVirus) #Append the virus parameters to the orginal parameters
@@ -34,7 +34,7 @@ const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
 
 if parameterVary == :Random
   #Give a unique parameter set for each cells (randomly choosen)
-  percent = 0.05 #current value ± percent
+  percent = 0.5 #current value ± percent
   sampleDist = @. Uniform((1-percent)*θVals,(1+percent)*θVals)
   θ = reshape.(rand.(sampleDist,nCells),N,N)
 
@@ -212,6 +212,9 @@ cellsInfected[findall(u0[:,:,2] .> 0.0), 1] .= 0.0
 #Keep track of time of death (TOD)
 cellsDead = fill(Inf,N,N) #Inf implies alive
 
+#Create an array that keeps track of whether or not a cell has tried to infect neighbors
+infectFirstAttempt = trues(N,N)
+
 #Define a structure to hold all the parameters for the ODE solver
 mutable struct ParContainer{T}
   par::T #Rate Constants
@@ -219,6 +222,7 @@ mutable struct ParContainer{T}
   deathParameter::Array{Float64,2} # 0 or 1 indicating cell is dead
   cellsInfected::Array{Float64,2} #Time cell was infected
   cellsDead::Array{Float64,2} #Time cell was killed
+  infectFirstAttempt::BitArray{2} #Has cell tried to infect neighbors?
 end
 
 #Create an instance of the structures
@@ -227,7 +231,8 @@ end
   [fill(i,N,N) for i in nonZeroSpeciesValues],
   deathParameter,
   cellsInfected,
-  cellsDead)
+  cellsDead,
+  infectFirstAttempt)
 
 #Contruct the ODE problem
 prob = ODEProblem(Model!,u0,tspan,θ)

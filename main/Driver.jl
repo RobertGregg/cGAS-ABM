@@ -14,24 +14,11 @@ include("NewVirusCB.jl")
 #include("Callbacks.jl")
 
 #What type of infection are we performing?
-infectionType = :Virus #ISD, Virus, None
+infectionType = :None #ISD, Virus, None
 
 if infectionType == :ISD
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)
 
 elseif infectionType == :Virus
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb)
-end
-
-
-#TODO Where should this go?
-
-function cellStates(t)
-    #Number of healthy cells at time t
-    totaHealthy = sum(θ.cellsInfected .>= t)
-    #Number of dead cells at time t
-    totalDead = sum(θ.cellsDead .<= t)
-    #Number of infected cells at time t
-    totalInfected = nCells - totaHealthy - totalDead
-    return [totaHealthy,totalInfected,totalDead]
 end
