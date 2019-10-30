@@ -1,17 +1,6 @@
 using ProgressMeter
 include("Driver.jl")
 
-
-function cellStates(t,θ)
-    #Number of healthy cells at time t
-    totaHealthy = sum(θ.cellsInfected .> t)
-    #Number of dead cells at time t
-    totalDead = sum(θ.cellsDead .< t)
-    #Number of infected cells at time t
-    totalInfected = nCells - totaHealthy - totalDead
-    return [totaHealthy,totalInfected,totalDead]
-end
-
 #Give a unique parameter set for each cells (randomly choosen), ignore virus parameters?
 
 stepSize = 0.1
@@ -77,7 +66,7 @@ end
 
 
 dotArray = [allStates[i,j][end,3] for j=1:simRepeat,i=1:length(vars)]
-baxplot(dotArray,framestyle=:box,labels=collect(vars))
+boxplot(dotArray,framestyle=:box,labels=collect(vars))
 ylabel!("Number of Dead Cells")
 xlabel!("Parameter Standard Deviation")
 savefig("../Figures/DeadCells.pdf")

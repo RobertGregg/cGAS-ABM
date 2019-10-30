@@ -2,10 +2,10 @@
 #Create an animation of Interferon production across the cell population
 ########################################################################
     #Get the max value for IFNβ concentration for whole simulation
-    Maxval = maximum(sol[:,:,2,:])
+    Maxval = maximum(sol[:,:,7,:])
     #Loop through time points to make an animation
-    anim = @animate for i = tspan[1]:0.01:2.0
-        heatmap(sol(i)[:,:,2],clims=(0.0,Maxval),
+    anim = @animate for i = tspan[1]:0.1:tspan[2]
+        heatmap(sol(i)[:,:,7],clims=(0.0,Maxval),
                 title="Time = " * string(i) * " hrs")
     end
 
@@ -33,7 +33,7 @@ gif(anim,"../Figures/CrossSectionAnimation.gif")
 #Plot dynamics for a particular state
 ########################################################################
 
-stateToPlot = 2
+stateToPlot = 6
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]
 plot(sol.t,plotState[:],leg=false,framestyle=:box)
 title!(statesNames[stateToPlot])
@@ -53,10 +53,10 @@ savefig("../Figures/" * statesNames[stateToPlot] * "Dynamics.png")
 allStates = Vector(undef,species)
 for (i,name) in enumerate(statesNames)
 
-    plotState = Vector(undef,sum(u0[:,:,2] .> 0.0))
+    plotState = Vector(undef,sum(u0[:,:,2] .== 0.0))
     j=1
     for coord in cellIndicies
-        if u0[coord,2] > 0.0
+        if u0[coord,2] == 0.0
             plotState[j] = sol[coord,i,:]
             j += 1
         end
@@ -68,7 +68,7 @@ for (i,name) in enumerate(statesNames)
 end
 
 plot(allStates...,size=(1200,800))
-savefig("../Figures/AllStates.png")
+savefig("../Figures/AllStatesSecondary.png")
 
 
 ########################################################################

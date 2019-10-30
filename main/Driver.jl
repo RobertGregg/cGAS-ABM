@@ -14,7 +14,9 @@ include("NewVirusCB.jl")
 #include("Callbacks.jl")
 
 #What type of infection are we performing?
-infectionType = :None #ISD, Virus, None
+infectionType = :ISD #ISD, Virus, None
+
+#TODO set death parameter of DNA to zero if using ISD
 
 if infectionType == :ISD
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)
