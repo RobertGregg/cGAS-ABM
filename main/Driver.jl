@@ -31,5 +31,5 @@ heat10hrVirus = DataFrame()
 heat10hrVirus.x = repeat(1:N,N)
 heat10hrVirus.y = repeat(1:N,inner=N)
 heat10hrVirus.IFN = vec(sol(10.0)[:,:,7])
-
+nfksjd
 CSV.write("heat10hrVirus.csv", heat10hrVirus)
