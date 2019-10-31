@@ -33,9 +33,9 @@ gif(anim,"../Figures/CrossSectionAnimation.gif")
 #Plot dynamics for a particular state
 ########################################################################
 
-stateToPlot = 6
+stateToPlot = 1
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]
-plot(sol.t,plotState[:],leg=false,framestyle=:box)
+plot(sol.t,plotState[:],leg=false,framestyle=:box,xtickfontsize=16,ytickfontsize=16)
 title!(statesNames[stateToPlot])
 xlabel!("Time (hrs)")
 ylabel!("(nM)")
@@ -53,22 +53,28 @@ savefig("../Figures/" * statesNames[stateToPlot] * "Dynamics.png")
 allStates = Vector(undef,species)
 for (i,name) in enumerate(statesNames)
 
-    plotState = Vector(undef,sum(u0[:,:,2] .== 0.0))
+    plotStateInfected = Vector(undef,sum(u0[:,:,2] .> 0.0))
+    plotStateHealthy = Vector(undef,sum(u0[:,:,2] .== 0.0))
     j=1
+    k=1
     for coord in cellIndicies
-        if u0[coord,2] == 0.0
-            plotState[j] = sol[coord,i,:]
+        if u0[coord,2] > 0.0
+            plotStateInfected[j] = sol[coord,i,:]
             j += 1
+        else
+            plotStateHealthy[k] = sol[coord,i,:]
+            k += 1
         end
     end
-    allStates[i]=plot(sol.t,plotState[:],leg=false,framestyle=:box)
+    allStates[i]=plot(sol.t,mean(plotStateInfected[:]),ribbon=std(plotStateInfected[:]),leg=false,framestyle=:box)
+    plot!(sol.t,mean(plotStateHealthy[:]),ribbon=std(plotStateHealthy[:]),leg=false,framestyle=:box)
     title!(statesNames[i])
     xlabel!("Time (hrs)")
     ylabel!("(nM)")
 end
 
 plot(allStates...,size=(1200,800))
-savefig("../Figures/AllStatesSecondary.png")
+savefig("../Figures/AllStatesSecondary.pdf")
 
 
 ########################################################################
