@@ -24,3 +24,15 @@ if infectionType == :ISD
 elseif infectionType == :Virus
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb)
 end
+<<<<<<< HEAD
+=======
+
+#Save the simulation for heatmap
+heat10hrVirus = DataFrame()
+
+heat10hrVirus.x = repeat(1:N,N)
+heat10hrVirus.y = repeat(1:N,inner=N)
+heat10hrVirus.IFN = vec(sol(10.0)[:,:,7])
+nfksjd
+CSV.write("heat10hrVirus.csv", heat10hrVirus)
+>>>>>>> 8a9f9a9969dfc7889aa02c519e6d10ed50132366
