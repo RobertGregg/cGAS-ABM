@@ -8,7 +8,7 @@ const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const species = 14 #Number of states within each cell (including virus)
-const moi = 1.0e-2 #Multicity of infection
+const moi = 1.0e-1 #Multicity of infection
 
 #Functtion that converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
@@ -25,7 +25,7 @@ m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
 θVirus = [1.0, 1.0] # k14f τ14 (Virus Parameters)
 append!(θVals,θVirus) #Append the virus parameters to the orginal parameters
 
-const tspan = (0.0,10.0) #Time span for simulation
+const tspan = (0.0,48.0) #Time span for simulation
 const tstop = sort(rand(Uniform(tspan[1],tspan[2]),1000)) #Times where the simulation stops and check for virus movement
 const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
                      "SOCSm","IRF7m","TREX1m","IRF7","TREX1","Virus"] #for plotting

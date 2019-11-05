@@ -33,8 +33,8 @@ primary = [ solsCurrent[infectidx] for solsCurrent in sols]
 secondary = [ solsCurrent[.!infectidx] for solsCurrent in sols]
 
 #Convert into dataframes
-primary = DataFrame(percent=repeat(1:percentRange,inner = sum(infectidx)),vConc=vcat(primary...))
-secondary = DataFrame(percent=repeat(1:percentRange,inner = sum(.!infectidx)),vConc=vcat(secondary...))
+primary = DataFrame(percent=repeat(1:percentRange,inner = sum(infectidx)),IFN=vcat(primary...),CellState = fill("Primary",length(vcat(primary...))))
+secondary = DataFrame(percent=repeat(1:percentRange,inner = sum(.!infectidx)),IFN=vcat(secondary...),CellState = fill("Secondary",length(vcat(secondary...))))
 
 #Plot the data
 @df primary violin(:percent, :vConc,side=:left,frame=:box,label=:primary,legend=:topleft,show_median=true)

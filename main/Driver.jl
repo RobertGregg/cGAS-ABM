@@ -14,9 +14,9 @@ include("NewVirusCB.jl")
 #include("Callbacks.jl")
 
 #What type of infection are we performing?
-infectionType = :Virus #ISD, Virus, None
+infectionType = :ISD #ISD, Virus, None
 
-#TODO set death parameter of DNA to zero if using ISD
+#HEY YOU, did you check the DNA ODE???
 
 if infectionType == :ISD
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)
@@ -24,12 +24,3 @@ if infectionType == :ISD
 elseif infectionType == :Virus
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb)
 end
-
-#Save the simulation for heatmap
-heat10hrVirus = DataFrame()
-
-heat10hrVirus.x = repeat(1:N,N)
-heat10hrVirus.y = repeat(1:N,inner=N)
-heat10hrVirus.IFN = vec(sol(10.0)[:,:,7])
-
-CSV.write("heat10hrVirus.csv", heat10hrVirus)
