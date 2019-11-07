@@ -34,5 +34,5 @@ p1 <- ggplot(heatAll, aes(x, y, fill=IFN)) +
   labs(title = 'Time: {format(round(frame_time, 2), nsmall = 2)} hours') +
   transition_time(t)
 
-anim_save("InterferonAnimation.gif",animation = p1)
+anim_save("VirusAnimation.gif",animation = p1)
 """

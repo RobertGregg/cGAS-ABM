@@ -26,8 +26,7 @@ elseif infectionType == :Virus
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb,saveat=0.1)
 end
 
-
-saveIFN = vec(sol[:,:,7,:])
-
-
+#Callback adds in extra time points
+trueTimeSubset = indexin(0:0.1:48,sol.t)
+saveIFN = vec(sol[:,:,7,trueTimeSubset])
 @save "saveIFN.jld2" saveIFN
