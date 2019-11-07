@@ -1,5 +1,5 @@
 #Some options to choose in the setup
-infectionMethod = :Drop #Wash or Drop
+infectionMethod = :Wash #Wash or Drop
 parameterVary = :None #Random, MCMC,StochIFN, or None
 
 #Constants for all cell
@@ -8,7 +8,7 @@ const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const species = 14 #Number of states within each cell (including virus)
-const moi = 1.0e-2 #Multicity of infection
+const moi = 1.0e-1 #Multicity of infection
 
 #Functtion that converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
@@ -149,7 +149,7 @@ function Model!(du,u,p,t)
 
   #Update derivatives for each species according to model
   @. d_cGAS = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS)
-  @. d_DNA = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS) - kcat2*TREX1*DNA / (Km2 + DNA) #+ 💀*DNA*(0.55-DNA)/0.55
+  @. d_DNA = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS) - kcat2*TREX1*DNA / (Km2 + DNA) + 💀*DNA*(0.55-DNA)/0.55
   @. d_Sting = -k3f*cGAMP*Sting + k3r*(Stingtot - Sting)
   @. d_cGAMP = k4f*(cGAStot - cGAS) - k3f*cGAMP*Sting + k3f*(Stingtot - Sting) - τ4*cGAMP
   @. d_IRF3 = -kcat5*IRF3*(Stingtot - Sting) / (Km5 +IRF3) + k5r*(IRF3tot - IRF3)
