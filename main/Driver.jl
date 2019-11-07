@@ -23,7 +23,7 @@ if infectionType == :ISD
     sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),saveat=0.1)
 
 elseif infectionType == :Virus
-    sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb)
+    sol = @time solve(prob,CVODE_BDF(linear_solver=:GMRES),callback=cb,saveat=0.1)
 end
 
 
