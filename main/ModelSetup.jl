@@ -8,7 +8,7 @@ const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const species = 14 #Number of states within each cell (including virus)
-const moi = 1.0e-1 #Multicity of infection
+const moi = 1.0e-3 #Multicity of infection
 
 #Functtion that converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
