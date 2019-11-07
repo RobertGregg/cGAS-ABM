@@ -4,14 +4,14 @@ include("Driver.jl")
 #Give a unique parameter set for each cells (randomly choosen), ignore virus parameters?
 
 stepSize = 0.1
-percentIFN = range(0.0,1.0,step=0.1)
+allPercentIFN = range(0.0,1.0,step=0.1)
 simRepeat = 10
 
 saveTimePoints = range(tspan[1],tspan[2],step=stepSize)
-allStates = [zeros(Int64,length(saveTimePoints),3) for i=1:length(percentIFN),j=1:simRepeat]
+allStates = [zeros(Int64,length(saveTimePoints),3) for i=1:length(allPercentIFN),j=1:simRepeat]
 
 
-for (i,percentIFN) in enumerate(percentIFN)
+for (i,percentIFN) in enumerate(allPercentIFN)
     for j=1:simRepeat
         @show (percentIFN,j)
 
@@ -23,11 +23,11 @@ for (i,percentIFN) in enumerate(percentIFN)
         θ.infectFirstAttempt = trues(N,N)
         #Change the parameters
         if percentIFN == 0.0
-            θ.par[13] .= 0.0
+            θ.par[11] .= 0.0
         else
             #kcat7 produces IFN, make it nonzero ~percentIFN of the time
             kcat7Vals = zeros(N,N)
-            θ.par[13][rand(N,N) .< percentIFN] .= 13.006
+            θ.par[11][rand(N,N) .< percentIFN] .= 47639.70295
         end
 
         probNew = remake(prob; p=θ)
@@ -39,7 +39,8 @@ for (i,percentIFN) in enumerate(percentIFN)
     end
 end
 
-
+plot(saveTimePoints,mean(allStates[2,:]),ribbon=std(allStates[2,:]),framestyle = :box,linewidth=2,
+    labels=[:Healthy,:Infected,:Dead])
 #=
 plot(saveTimePoints,mean(allStates),ribbon=std(allStates),framestyle = :box,linewidth=2,
     labels=[:Healthy,:Infected,:Dead])
@@ -63,17 +64,11 @@ end
 
 
 
-dotArray = [allStates[i,j][end,3] for j=1:simRepeat,i=1:length(percentIFN)]
-boxplot(100 .*dotArray./nCells,framestyle=:box,labels=collect(percentIFN),legend=false)
+dotArray = [allStates[i,j][end,3] for j=1:simRepeat,i=1:length(allPercentIFN)]
+boxplot(100 .*dotArray./nCells,framestyle=:box,labels=collect(allPercentIFN),legend=false)
 ylabel!("Percentage of Dead Cells")
 xlabel!("Percentage of Cells Producing IFNβ")
-savefig("../Figures/DeadCells.pdf")
+#savefig("../Figures/DeadCells.pdf")
 
-violin(dotArray,framestyle=:box,legend=false)
 
-using DataFrames
-CSV.write("BoxData.csv",  DataFrame(dotArray), writeheader=false)
-
-scatter(100 .*percentIFN,100 .*vec(dotArray)./nCells,legend=false,framestyle=:box,xaxis=0:10:100)
-ylabel!("Percentage of Dead Cells")
-xlabel!("Percentage of Cells Producing IFNb")
+dotArray

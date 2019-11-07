@@ -1,5 +1,5 @@
 #Some options to choose in the setup
-infectionMethod = :Wash #Wash or Drop
+infectionMethod = :Drop #Wash or Drop
 parameterVary = :None #Random, MCMC,StochIFN, or None
 
 #Constants for all cell
@@ -8,7 +8,7 @@ const nCells = N^2 #number of cells in the simulation
 const cellVol = 3e-12 #Cell Volume (liters)
 const Na = 6.02e23 #Avagadro's number
 const species = 14 #Number of states within each cell (including virus)
-const moi = 1.0e-1 #Multicity of infection
+const moi = 1.0e-2 #Multicity of infection
 
 #Functtion that converts molecules to nM
 m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
@@ -59,7 +59,7 @@ elseif parameterVary == :StochIFN
   #Keep most parameters the same
   θ = fill.(θVals,N,N)
   #kcat8 produces IFN, make it nonzero ~20% of the time
-  θ[13] .= rand([zeros(4)...,θVals[13]],N,N)
+  θ[11] .= rand([zeros(4)...,θVals[11]],N,N)
 else
   θ = θVals #Just keep the parameters as is
 end

@@ -2,10 +2,10 @@
 #Create an animation of Interferon production across the cell population
 ########################################################################
     #Get the max value for IFNβ concentration for whole simulation
-    Maxval = maximum(sol[:,:,7,:])
+    Maxval = maximum(sol[:,:,2,:])
     #Loop through time points to make an animation
     anim = @animate for i = tspan[1]:0.1:tspan[2]
-        heatmap(sol(i)[:,:,7],clims=(0.0,Maxval),
+        heatmap(sol(i)[:,:,2],clims=(0.0,Maxval),
                 title="Time = " * string(i) * " hrs")
     end
 
@@ -33,7 +33,7 @@ gif(anim,"../Figures/CrossSectionAnimation.gif")
 #Plot dynamics for a particular state
 ########################################################################
 
-stateToPlot = 7
+stateToPlot = 13
 plotState=[sol[coord,stateToPlot,:] for coord in cellIndicies]
 plot(sol.t,plotState[:],leg=false,framestyle=:box,xtickfontsize=16,ytickfontsize=16)
 title!(statesNames[stateToPlot])
@@ -82,11 +82,11 @@ savefig("../Figures/AllStatesSecondary.pdf")
 ########################################################################
 
 saveTimePoints = range(tspan[1],tspan[2],step=0.1)
-allStates = zeros(Int64,length(saveTimePoints),3)
+allCellStates = zeros(Int64,length(saveTimePoints),3)
 
 for k=1:length(saveTimePoints)
-    allStates[k,:] = cellStates(saveTimePoints[k],θ)
+    allCellStates[k,:] = cellStates(saveTimePoints[k],θ)
 end
 
-plot(saveTimePoints,allStates,framestyle = :box,linewidth=2,
+plot(saveTimePoints,allCellStates,framestyle = :box,linewidth=2,
     labels=[:Healthy,:Infected,:Dead])
