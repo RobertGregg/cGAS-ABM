@@ -15,7 +15,7 @@ include("NewVirusCB.jl")
 #include("Callbacks.jl")
 
 #What type of infection are we performing?
-infectionType = :Virus #ISD, Virus, None
+infectionType = :None #ISD, Virus, None
 
 #HEY YOU, did you check the DNA ODE???
 
@@ -27,6 +27,8 @@ elseif infectionType == :Virus
 end
 
 #Callback adds in extra time points
+#=
 trueTimeSubset = indexin(0:0.1:48,sol.t)
 saveIFN = vec(sol[:,:,7,trueTimeSubset])
 @save "saveIFN.jld2" saveIFN
+=#

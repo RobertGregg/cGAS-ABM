@@ -175,6 +175,10 @@ ggsave("../Figures/Figure4.pdf")
 #low = aggregate(KDData[,1:2], list(KDData$Percent,KDData$Time), FUN = 'quantile',probs=0.25)
 #high = aggregate(KDData[,1:2], list(KDData$Percent,KDData$Time), FUN = 'quantile',probs=0.95)
 
+########################################################################
+#Plot Heterogeneity (Figure 5)
+########################################################################
+
 #full = vcat(primary, secondary)
 #CSV.write("MOI1e-2.csv",full)
 lowInfect = CSV.read("MOI1e-2.csv")
@@ -237,7 +241,7 @@ p2 <- ggplot(medInfect, aes(factor(percent), IFN, fill = CellState)) +
   commonFigureOptions
 
 p3 <- ggplot(highInfect, aes(factor(percent), IFN, fill = CellState)) +
-  ggtitle("63% Primary Cells Initially") +
+  ggtitle("63% of Cells Initially Transfected") +
   commonFigureOptions
 
 figure <- ggarrange(p1, p2, p3,

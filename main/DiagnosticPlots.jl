@@ -2,14 +2,14 @@
 #Create an animation of Interferon production across the cell population
 ########################################################################
     #Get the max value for IFNβ concentration for whole simulation
-    Maxval = maximum(sol[:,:,7,:])
+    Maxval = maximum(sol[:,:,2,:])
     #Loop through time points to make an animation
     anim = @animate for i = tspan[1]:0.1:tspan[2]
-        heatmap(sol(i)[:,:,7],clims=(0.0,Maxval),
+        heatmap(sol(i)[:,:,2],clims=(0.0,Maxval),
                 title="Time = " * string(i) * " hrs")
     end
 
-    gif(anim,"../Figures/InterferonAnimation.gif")
+    gif(anim,"../Figures/DNAAnimation.gif")
 
 
 

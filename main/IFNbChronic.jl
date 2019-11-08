@@ -1,3 +1,7 @@
+#Run with:
+# tspan[2] = 168
+# Wash
+# no par vary
 using ProgressMeter
 
 include("Driver.jl")
@@ -25,18 +29,18 @@ for ((kcat8,τ7),i) in iter
 end
 
 #Reduce the solution
-finalIFNβ = [mean(sol[:,:,7,end]) for sol in solutionArray]
+finalIFNb = [mean(sol[:,:,7,end]) for sol in solutionArray]
 
-plt = heatmap(kcat8Vals,τ7Vals,reverse(finalIFNβ),color=:viridis)
+plt = heatmap(kcat8Vals,τ7Vals,reverse(finalIFNb),color=:viridis)
 
 title!("Chronic Inflammation")
 xlabel!("Interferon Degradation tau7")
 ylabel!("JAK/STAT Activity kcat8")
 
-savefig(plt,"../Figures/IFNbChronic.pdf")
+savefig(plt,"../Figures/IFNbChronic1.pdf")
 
 
-
+@save "savefinalIFNb.jld2" finalIFNb
 #=
 θ.par[[13,27]] = [20.,20.]
 

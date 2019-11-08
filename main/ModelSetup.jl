@@ -1,5 +1,5 @@
 #Some options to choose in the setup
-infectionMethod = :Wash #Wash or Drop
+infectionMethod = :Drop #Wash or Drop
 parameterVary = :None #Random, MCMC,StochIFN, or None
 
 #Constants for all cell
@@ -25,7 +25,7 @@ m2c(molecule) = @. 1e9*molecule/(cellVol*Na)
 θVirus = [1.0, 1.0] # k14f τ14 (Virus Parameters)
 append!(θVals,θVirus) #Append the virus parameters to the orginal parameters
 
-const tspan = (0.0,48.0) #Time span for simulation
+const tspan = (0.0,168.0) #Time span for simulation
 const tstop = sort(rand(Uniform(tspan[1],tspan[2]),1000)) #Times where the simulation stops and check for virus movement
 const statesNames = ["cGAS","DNA","Sting","cGAMP","IRF3","IFNbm","IFNb","STAT",
                      "SOCSm","IRF7m","TREX1m","IRF7","TREX1","Virus"] #for plotting
@@ -59,7 +59,7 @@ elseif parameterVary == :StochIFN
   #Keep most parameters the same
   θ = fill.(θVals,N,N)
   #kcat8 produces IFN, make it nonzero ~20% of the time
-  θ[11] .= rand([zeros(4)...,θVals[11]],N,N)
+  θ[11] .= rand([zeros(7)...,θVals[11]],N,N)
 else
   θ = θVals #Just keep the parameters as is
 end
@@ -149,7 +149,7 @@ function Model!(du,u,p,t)
 
   #Update derivatives for each species according to model
   @. d_cGAS = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS)
-  @. d_DNA = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS) - kcat2*TREX1*DNA / (Km2 + DNA) + 💀*DNA*(0.55-DNA)/0.55
+  @. d_DNA = -k1f*cGAS*DNA + k1r*(cGAStot - cGAS) - kcat2*TREX1*DNA / (Km2 + DNA) + #💀*DNA*(0.55-DNA)/0.55
   @. d_Sting = -k3f*cGAMP*Sting + k3r*(Stingtot - Sting)
   @. d_cGAMP = k4f*(cGAStot - cGAS) - k3f*cGAMP*Sting + k3f*(Stingtot - Sting) - τ4*cGAMP
   @. d_IRF3 = -kcat5*IRF3*(Stingtot - Sting) / (Km5 +IRF3) + k5r*(IRF3tot - IRF3)
